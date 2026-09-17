@@ -1,0 +1,305 @@
+﻿{
+    "recorded_at":  "2026-09-17T14:01:25+09:00",
+    "scope":  "development fixtures, not hidden evaluation",
+    "python":  "3.12.3",
+    "slither":  "0.11.6",
+    "solc":  "0.8.20",
+    "unittest_count":  17,
+    "unittest_seconds":  63.937,
+    "fixture_count":  40,
+    "benign":  24,
+    "malicious":  16,
+    "correct":  40,
+    "wrong":  0,
+    "uncertain":  0,
+    "files":  [
+                  {
+                      "path":  "scripts/inspect_sol.py",
+                      "sha256":  "df8984d2ecb61ed9416f027b97c84b679959e8b0f4b62d10836f172fad9ff3b5"
+                  },
+                  {
+                      "path":  "scripts/inspect_paths_api.py",
+                      "sha256":  "2b77d5a6a56a7011ecd82493c12080b930e20300abffa028e7e04b4ab3c3aa41"
+                  },
+                  {
+                      "path":  "scripts/inspect_ir.py",
+                      "sha256":  "a2482a412f53007947dc582201535144e888650451590bf30b1fcd92bc7e4c43"
+                  },
+                  {
+                      "path":  "scripts/compare_baseline.py",
+                      "sha256":  "881c31ac7537c066e13c2368480899b1adaf4f9f2be0e06192b0663895e0bf27"
+                  },
+                  {
+                      "path":  "scripts/analyze.py",
+                      "sha256":  "f7ecac4141e0dc8b8cefd6e194957f2998f07a814a3fd2e08feda82b90a5daa0"
+                  },
+                  {
+                      "path":  "tests/test_supply.py",
+                      "sha256":  "fecf04992bef9b9345e525021111d680867bcc374fd11a5b0b63e1144c54c190"
+                  },
+                  {
+                      "path":  "tests/test_expanded.py",
+                      "sha256":  "5bdfd6773b776af9b41a19a8d1998d12c38630a361eaebe11c21e922e1526d0c"
+                  },
+                  {
+                      "path":  "tests/test_cli.py",
+                      "sha256":  "c45b9b35b65672242c196141e9bf5af35be437c0f7b7a65b19d52b8d0c371166"
+                  },
+                  {
+                      "path":  "tests/build_variants.py",
+                      "sha256":  "30b5c91ed5e273422b8c390b85dce327eb60fd57a3f92368d7a0dced66f6575e"
+                  },
+                  {
+                      "path":  "tests/evaluate_variants.py",
+                      "sha256":  "538947ddd605bc6460ddefe7ea19f27c594b46eca4528468f11a78a1d5671b08"
+                  },
+                  {
+                      "path":  "src/track1/verdict.py",
+                      "sha256":  "0620e5ce0055c292249d12316eadac1a9667b3aef04459ac9a4ccf173e174fc9"
+                  },
+                  {
+                      "path":  "src/track1/__init__.py",
+                      "sha256":  "b761531c97955f44f961e016308c6d40d1dbba075621dae5aa5c9fe3a99fe16e"
+                  },
+                  {
+                      "path":  "src/track1/worker.py",
+                      "sha256":  "9365dd75106d0c76a7cb96bb970e9d6d0bc6e8ce4b5a47b98d8530ee672a1dd6"
+                  },
+                  {
+                      "path":  "src/track1/cli.py",
+                      "sha256":  "5a71c5d285efa60eaaa19e8ded2e3f2f1df89a8e82f14a1895accb24c94a06f3"
+                  },
+                  {
+                      "path":  "src/track1/rules/__init__.py",
+                      "sha256":  "5cd2af57f895d7fd03231c977e4451ac417c5c84ee718fd63bbc804c468bdd0a"
+                  },
+                  {
+                      "path":  "src/track1/rules/transfer_restrictions.py",
+                      "sha256":  "d227ff2341d7b2a580b85c037247ae147a01ac8042df7c62be1597ac50e10c59"
+                  },
+                  {
+                      "path":  "src/track1/rules/supply.py",
+                      "sha256":  "90533238c95c17d093773abea22c910538e409f9c6e9892f2bb38edffd59440a"
+                  },
+                  {
+                      "path":  "src/track1/rules/paths.py",
+                      "sha256":  "0967b7397130a7914fb135de89d16b2d489e6da5131a95e20adc36fdce9b863f"
+                  },
+                  {
+                      "path":  "src/track1/rules/linear.py",
+                      "sha256":  "2f0958751aa0ba858365f38838a2dccb801086e75de6f1be73a777bbe62b8e39"
+                  },
+                  {
+                      "path":  "src/track1/rules/fixed_supply.py",
+                      "sha256":  "5813de88d4a0edf75feca9e1fe859c5f846d7045cf6d47f85f38307a2c963203"
+                  },
+                  {
+                      "path":  "src/track1/rules/expanded_vaults.py",
+                      "sha256":  "e57aea0e000c9dabdc32a3427b9d4c292f4eb7dbfa30f16a1c76613fa8f1143c"
+                  },
+                  {
+                      "path":  "src/track1/rules/expanded_tokens.py",
+                      "sha256":  "a29e2715197a275e14b976267c968bbb4f2fca383396f6725a10d62f8298a118"
+                  },
+                  {
+                      "path":  "src/track1/rules/delegatecall.py",
+                      "sha256":  "d1cd42db81f4ccd3eefef063ed837787d9cede05b14b49f3c8ce7f1ee1d27482"
+                  },
+                  {
+                      "path":  "src/track1/rules/common.py",
+                      "sha256":  "c9cadf55a23dc8c215969401d4e003ef43181fb0e136a2a93c1602c7072f21fc"
+                  },
+                  {
+                      "path":  "src/track1/rules/checked.py",
+                      "sha256":  "22b8bd643b0876b9463d3ae304da35c0ddea182f1687ad62ab066aad7f063aa3"
+                  },
+                  {
+                      "path":  "tests/fixtures/variants/review_pending/no_sender_restriction.sol",
+                      "sha256":  "98db933fa6bf3dedd3d8e469a7c86049b2b1717dca4ba82c255f6d691114d7e4"
+                  },
+                  {
+                      "path":  "tests/fixtures/variants/review_pending/no_deposit.sol",
+                      "sha256":  "793c0e1e05347e675c9b91f2b24c52ffc00a0204ccd1a7f36651a0081125e54b"
+                  },
+                  {
+                      "path":  "tests/fixtures/variants/review_pending/missing_allowance.sol",
+                      "sha256":  "7428f587eb3713a107786c943d8cfe004957350dd9846ecabef259f55d66da00"
+                  },
+                  {
+                      "path":  "tests/fixtures/variants/r1/cap_removed.sol",
+                      "sha256":  "8f0489ef44d78c82a7e930beeffd3960abda850c3597dc9fed2a7d94727dd5d9"
+                  },
+                  {
+                      "path":  "tests/fixtures/variants/r1/cap_bypass.sol",
+                      "sha256":  "f160c073cabf13a55bc3ce34be36bc15229bfc8d396e6c06d841abd7e25c3763"
+                  },
+                  {
+                      "path":  "tests/fixtures/variants/expanded/allowance_reuse_risk.sol",
+                      "sha256":  "40905438a7004891ac9a57d6f7a08b13be3870d67453ad503a4a68f6e26a75ea"
+                  },
+                  {
+                      "path":  "tests/fixtures/variants/expanded/allowance_implicit_safe.sol",
+                      "sha256":  "493b48d15512a64968a950f2872d23ab2bfe3cd24261f53bb776921149bbf914"
+                  },
+                  {
+                      "path":  "tests/fixtures/errors/invalid_syntax.sol",
+                      "sha256":  "1d7ffd922ee35f00da900579230a19ba769e4b1e09470061a52cc4e939feca20"
+                  },
+                  {
+                      "path":  "tests/fixtures/variants/expanded/contradictory_safe.sol",
+                      "sha256":  "d3569c6f9d1f1980c47ca013e80d660f46a14fe63e7f577e23e86cbd0469c043"
+                  },
+                  {
+                      "path":  "tests/fixtures/variants/expanded/cap_second_safe.sol",
+                      "sha256":  "7ced5c31dd8e6fa20256dfe7bb3f24abbfab38b9c3d7f1017c75c7d7cf89ce58"
+                  },
+                  {
+                      "path":  "tests/fixtures/variants/expanded/cap_second_risk.sol",
+                      "sha256":  "bff71576d29d8efe056218d173ed73bd1cfeffd71baed08c165442eba6bfc55c"
+                  },
+                  {
+                      "path":  "tests/fixtures/variants/expanded/cap_per_call_risk.sol",
+                      "sha256":  "30d61050e79f05023d45783b5feb121e56a842f5ad52d67bbe4308903a8cb195"
+                  },
+                  {
+                      "path":  "tests/fixtures/variants/expanded/cap_mutable_safe.sol",
+                      "sha256":  "9d33a277a3c69fe8e3c877e4558058b3afaabe9e5d05729560ea1a4a92218675"
+                  },
+                  {
+                      "path":  "tests/fixtures/variants/expanded/cap_mutable_risk.sol",
+                      "sha256":  "ab601cae8eac0fc9b00d3fb4cbdf6658c30b23c0b27bdca6affa9b5f40b4e9c6"
+                  },
+                  {
+                      "path":  "tests/fixtures/variants/expanded/cap_moving_ceiling_risk.sol",
+                      "sha256":  "9f0308b0f0388609a0178f6d2cf5fc02f11c7a379ee56a81ce1d185227942e42"
+                  },
+                  {
+                      "path":  "tests/fixtures/variants/expanded/cap_branch_safe.sol",
+                      "sha256":  "e762d30e330da330648d85edffade06974ad37798fa17da562701130750bc659"
+                  },
+                  {
+                      "path":  "tests/fixtures/variants/expanded/cap_branch_risk.sol",
+                      "sha256":  "4641a15f77feb3aa9445f21b6c12f385d991ac590c622f16a4f52c1a48e813e4"
+                  },
+                  {
+                      "path":  "tests/fixtures/variants/expanded/cap_amount_safe.sol",
+                      "sha256":  "8987d2b67504d9f87fdc5a415b6ae2d5f19b7dda5a755bb44df4b669ed4fb6a3"
+                  },
+                  {
+                      "path":  "tests/fixtures/variants/expanded/cap_amount_risk.sol",
+                      "sha256":  "14111d9c568ccf262f37de76b0c6e62f6886bc25871dde7d62786f711200008a"
+                  },
+                  {
+                      "path":  "tests/fixtures/variants/expanded/allowance_safe.sol",
+                      "sha256":  "d4859b1898a361b888a2f6b8c45b2d6de099f52ecc3aefca1e19843bfb224739"
+                  },
+                  {
+                      "path":  "tests/fixtures/variants/expanded/allowance_risk.sol",
+                      "sha256":  "7428f587eb3713a107786c943d8cfe004957350dd9846ecabef259f55d66da00"
+                  },
+                  {
+                      "path":  "tests/fixtures/variants/expanded/inherited_safe.sol",
+                      "sha256":  "c6e079807c1abca1842fbdf4560441caaa011f7982442c67b1db45452ff5109d"
+                  },
+                  {
+                      "path":  "tests/fixtures/variants/expanded/inherited_risk.sol",
+                      "sha256":  "588fddc2b577fad14a5b37809385eceb3326e33191b08b65f960b669ee6f9c60"
+                  },
+                  {
+                      "path":  "tests/fixtures/variants/expanded/force_send_safe.sol",
+                      "sha256":  "241bfc783fe853fa46d21ab35c88e220fb44e0e0f0010e5c6b616627417e8ba2"
+                  },
+                  {
+                      "path":  "tests/fixtures/variants/expanded/expected.json",
+                      "sha256":  "7aa98997b2ceec9d2422a2b32c0fbef8a08471196951a0fb37b8b7e3f7268081"
+                  },
+                  {
+                      "path":  "tests/fixtures/variants/expanded/delegate_risk.sol",
+                      "sha256":  "709a21f2ae09b0d0cdb8403e03c151440181dcd87805d6058b7bda8b77adc4f6"
+                  },
+                  {
+                      "path":  "tests/fixtures/variants/expanded/delegate_no_deposit_safe.sol",
+                      "sha256":  "4877aa908c4bc4f54a5d1ad4e7b44efec31a2c02c04a6a20c75cace2689a475a"
+                  },
+                  {
+                      "path":  "tests/fixtures/variants/expanded/dead_branch_safe.sol",
+                      "sha256":  "1bcf88f5ef2ec085b879ca66f2a18cc0d0a1f79afa2d3df348ae3daabae53c85"
+                  },
+                  {
+                      "path":  "tests/fixtures/variants/expanded/late_checked_safe.sol",
+                      "sha256":  "8482d6000179b5dfd7ead603b31e32e9d5945cf8177e6bcf904c4c7021289778"
+                  },
+                  {
+                      "path":  "tests/fixtures/variants/expanded/internal_safe.sol",
+                      "sha256":  "21b1943f626cfd3fc9b6c03ce7ceefa743d39725f43f859af73e18dc7e1865fd"
+                  },
+                  {
+                      "path":  "tests/fixtures/variants/expanded/internal_risk.sol",
+                      "sha256":  "f311ebf4e5332e6360b51c15bebc462c7931f5259fd9559e7a1b009d4edfea88"
+                  },
+                  {
+                      "path":  "tests/fixtures/variants/expanded/modifier_argument_safe.sol",
+                      "sha256":  "cfc2062224cb9fa59518fc638ceafdfa98e12c65ad1369d639b3b2493ee27622"
+                  },
+                  {
+                      "path":  "tests/fixtures/variants/expanded/modifier_argument_risk.sol",
+                      "sha256":  "9d0f386376deaad9fe5d684300dcffaf1c4f9e213a7297e0c4149846a8017c64"
+                  },
+                  {
+                      "path":  "tests/fixtures/variants/expanded/ownership_risk.sol",
+                      "sha256":  "6e006935a168c74140e8063c4020f53905a20cd893d2bf77e2384fbcf3f68e4e"
+                  },
+                  {
+                      "path":  "tests/fixtures/variants/expanded/ownership_safe.sol",
+                      "sha256":  "d550ca61200312ed9d6c0c32c183df9c96c5059890a7a9e80e538fc3f8096952"
+                  },
+                  {
+                      "path":  "tests/fixtures/variants/expanded/zero_mint_safe.sol",
+                      "sha256":  "07ee77e9821e9f4b5ec3bd097f59b2d2bf995542a742c1f3e56560ad606768f6"
+                  },
+                  {
+                      "path":  "tests/fixtures/variants/expanded/withdraw_safe.sol",
+                      "sha256":  "d92efd4816632ab6d368d40249ed0295081d64e9bda2eea8b082a2069df825d0"
+                  },
+                  {
+                      "path":  "tests/fixtures/variants/expanded/withdraw_risk.sol",
+                      "sha256":  "c80f245e126ac5bda020ce0b0310688ad68fc2ca0ab8e801ee5b222a8aaf6d03"
+                  },
+                  {
+                      "path":  "tests/fixtures/variants/expanded/unused_list_safe.sol",
+                      "sha256":  "af1bf75871f36a633d52ba73b6e30b79aab94f3d935d8614b3e770951c555b99"
+                  },
+                  {
+                      "path":  "tests/fixtures/variants/expanded/unreachable_internal_safe.sol",
+                      "sha256":  "9bfa8a680c4dba282934f8c8bfe706542ddbadd477d2922145b4fc3e8908f2f1"
+                  },
+                  {
+                      "path":  "tests/fixtures/variants/expanded/revert_branch_safe.sol",
+                      "sha256":  "aa5ef40fc0cc5948abf591266110cd9990161038bffeae65f5996351c47430c2"
+                  },
+                  {
+                      "path":  "tests/fixtures/variants/expanded/reentry_safe.sol",
+                      "sha256":  "9fc35453de876c4e6faa313ba65b04edf7cc4c20a561d6174822c78d5a7f0f9c"
+                  },
+                  {
+                      "path":  "tests/fixtures/variants/expanded/reentry_risk.sol",
+                      "sha256":  "0ab7538b227e913a44581892e28f827fb0de0389a1519398d6e5be046aee6539"
+                  },
+                  {
+                      "path":  "tests/fixtures/variants/expanded/reentry_locked_safe.sol",
+                      "sha256":  "50f3fbed5c04b767553f84ba429ebedb4a320e1eb79fe6b2e8075d7ab84d4ed0"
+                  },
+                  {
+                      "path":  "tests/fixtures/variants/expanded/postcheck_safe.sol",
+                      "sha256":  "48acd43047b6091175a9ca4380a7d0079bff719823d815c493bdcbcbf92e91b5"
+                  },
+                  {
+                      "path":  "tests/fixtures/variants/expanded/pause_safe.sol",
+                      "sha256":  "7b5af25c80e93a5111ace628cb507a5dbd7248c04a0b8d3f64d5728e0dc89615"
+                  },
+                  {
+                      "path":  "tests/fixtures/variants/expanded/pause_risk.sol",
+                      "sha256":  "e25e436713d6a47ec3eb526fe3e91b4f739fa32a91693b1152ebd24df16b6004"
+                  }
+              ]
+}

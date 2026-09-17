@@ -1,0 +1,107 @@
+[
+  {
+    "file": "reference/public/P1_StandardToken.sol",
+    "success": true,
+    "detectors": [
+      "constable-states",
+      "immutable-states",
+      "solc-version"
+    ],
+    "finding_count": 4
+  },
+  {
+    "file": "reference/public/P2_HiddenMint.sol",
+    "success": true,
+    "detectors": [
+      "constable-states",
+      "immutable-states",
+      "solc-version"
+    ],
+    "finding_count": 4
+  },
+  {
+    "file": "reference/public/P3_Honeypot.sol",
+    "success": true,
+    "detectors": [
+      "constable-states",
+      "immutable-states",
+      "solc-version"
+    ],
+    "finding_count": 5
+  },
+  {
+    "file": "reference/public/P4_CappedMint.sol",
+    "success": true,
+    "detectors": [
+      "constable-states",
+      "immutable-states",
+      "solc-version"
+    ],
+    "finding_count": 4
+  },
+  {
+    "file": "reference/public/P5_DelegatecallBackdoor.sol",
+    "success": true,
+    "detectors": [
+      "controlled-delegatecall",
+      "immutable-states",
+      "low-level-calls",
+      "missing-zero-check",
+      "reentrancy-events",
+      "solc-version"
+    ],
+    "finding_count": 7
+  },
+  {
+    "file": "tests/fixtures/variants/expanded/cap_branch_risk.sol",
+    "success": true,
+    "detectors": [
+      "constable-states",
+      "immutable-states",
+      "solc-version"
+    ],
+    "finding_count": 4
+  },
+  {
+    "file": "tests/fixtures/variants/expanded/allowance_risk.sol",
+    "success": true,
+    "detectors": [
+      "constable-states",
+      "immutable-states",
+      "solc-version"
+    ],
+    "finding_count": 4
+  },
+  {
+    "file": "tests/fixtures/variants/expanded/reentry_risk.sol",
+    "success": true,
+    "detectors": [
+      "immutable-states",
+      "low-level-calls",
+      "reentrancy-eth",
+      "solc-version"
+    ],
+    "finding_count": 4
+  },
+  {
+    "file": "tests/fixtures/variants/expanded/reentry_locked_safe.sol",
+    "success": true,
+    "detectors": [
+      "immutable-states",
+      "low-level-calls",
+      "reentrancy-eth",
+      "solc-version"
+    ],
+    "finding_count": 4
+  },
+  {
+    "file": "tests/fixtures/variants/expanded/withdraw_risk.sol",
+    "success": true,
+    "detectors": [
+      "immutable-states",
+      "low-level-calls",
+      "solc-version"
+    ],
+    "finding_count": 4
+  }
+]

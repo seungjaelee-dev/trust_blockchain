@@ -1,0 +1,162 @@
+{
+  "cap_branch_safe.sol": {
+    "verdict": "BENIGN",
+    "reason": "양 갈래 모두 같은 증가량을 제한"
+  },
+  "cap_amount_safe.sol": {
+    "verdict": "BENIGN",
+    "reason": "실제 증가량 검사"
+  },
+  "cap_mutable_safe.sol": {
+    "verdict": "BENIGN",
+    "reason": "변경 가능하지만 고정된 최종 천장을 지킴"
+  },
+  "cap_second_safe.sol": {
+    "verdict": "BENIGN",
+    "reason": "두 발행 함수 모두 상한 강제"
+  },
+  "internal_safe.sol": {
+    "verdict": "BENIGN",
+    "reason": "내부 함수의 실제 증가량 상한 검사"
+  },
+  "allowance_safe.sol": {
+    "verdict": "BENIGN",
+    "reason": "당사자 승인 검사 및 사용분 차감"
+  },
+  "pause_safe.sol": {
+    "verdict": "BENIGN",
+    "reason": "정지 제약은 관리자에게도 동일하게 적용"
+  },
+  "cap_branch_risk.sol": {
+    "verdict": "MALICIOUS",
+    "reason": "false 입력으로 상한 검사 우회 후 발행 가능"
+  },
+  "cap_amount_risk.sol": {
+    "verdict": "MALICIOUS",
+    "reason": "0을 검사하고 별도의 큰 amount로 발행 가능"
+  },
+  "cap_mutable_risk.sol": {
+    "verdict": "MALICIOUS",
+    "reason": "관리자가 상한을 임의로 올린 뒤 발행 가능"
+  },
+  "cap_second_risk.sol": {
+    "verdict": "MALICIOUS",
+    "reason": "두 번째 외부 함수가 상한 우회"
+  },
+  "internal_risk.sol": {
+    "verdict": "MALICIOUS",
+    "reason": "내부 함수에 옮겨진 무상한 발행"
+  },
+  "allowance_risk.sol": {
+    "verdict": "MALICIOUS",
+    "reason": "피해자 승인 없이 제3자가 잔액 이동 가능"
+  },
+  "pause_risk.sol": {
+    "verdict": "MALICIOUS",
+    "reason": "관리자가 정지시켜도 자신은 전송 가능"
+  },
+  "ownership_safe.sol": {
+    "verdict": "BENIGN",
+    "reason": "기존 소유자만 관리권 이전, 사용자 잔액 임의 변경 기능 없음"
+  },
+  "ownership_risk.sol": {
+    "verdict": "MALICIOUS",
+    "reason": "임의 관리권 획득 후 남의 토큰 이동; seize 자체도 관리자 탈취 경로"
+  },
+  "withdraw_safe.sol": {
+    "verdict": "BENIGN",
+    "reason": "자기 예치금 차감 후 같은 금액을 본인에게 송금"
+  },
+  "withdraw_risk.sol": {
+    "verdict": "MALICIOUS",
+    "reason": "사용자 예치금을 관리자에게 전액 송금"
+  },
+  "force_send_safe.sol": {
+    "verdict": "BENIGN",
+    "reason": "예치 경로와 다른 사용자 자산 없음; 강제 ETH는 대회 귀속 가정상 사용자 자산 아님"
+  },
+  "reentry_risk.sol": {
+    "verdict": "MALICIOUS",
+    "reason": "송금 시 장부가 그대로이며 재호출 가능, 복귀 후 0 대입으로 중복 지급이 취소되지 않음"
+  },
+  "reentry_safe.sol": {
+    "verdict": "BENIGN",
+    "reason": "송금 전에 예치금을 0으로 만들어 같은 돈의 재출금 차단"
+  },
+  "postcheck_safe.sol": {
+    "verdict": "BENIGN",
+    "reason": "외부 호출 없는 거래의 사후 검사 실패는 앞선 증가까지 취소"
+  },
+  "dead_branch_safe.sol": {
+    "verdict": "BENIGN",
+    "reason": "도달 불가능한 발행 코드를 위험 근거로 사용하지 않음"
+  },
+  "revert_branch_safe.sol": {
+    "verdict": "BENIGN",
+    "reason": "초과 분기는 revert하고 성공하는 경로는 상한 이하"
+  },
+  "allowance_implicit_safe.sol": {
+    "verdict": "BENIGN",
+    "reason": "0.8 checked 승인 차감의 underflow 실패도 승인 한도를 강제"
+  },
+  "allowance_reuse_risk.sol": {
+    "verdict": "MALICIOUS",
+    "reason": "사용한 승인을 차감하지 않아 승인 총량보다 반복 전송 가능"
+  },
+  "unused_list_safe.sol": {
+    "verdict": "BENIGN",
+    "reason": "사용되지 않는 허용 목록은 실제 전송을 제한하지 않음"
+  },
+  "delegate_risk.sol": {
+    "verdict": "MALICIOUS",
+    "reason": "사용자 예치금과 소유자 임의 delegatecall 연결"
+  },
+  "delegate_no_deposit_safe.sol": {
+    "verdict": "BENIGN",
+    "reason": "예치 없는 force-send만의 대회 경계, 다른 사용자 자산 없음"
+  },
+  "inherited_safe.sol": {
+    "verdict": "BENIGN",
+    "reason": "같은 파일의 부모 함수/상태를 상속, 실제 발행 상한 유무를 판정"
+  },
+  "inherited_risk.sol": {
+    "verdict": "MALICIOUS",
+    "reason": "같은 파일의 부모 함수/상태를 상속, 실제 발행 상한 유무를 판정"
+  },
+  "cap_moving_ceiling_risk.sol": {
+    "verdict": "MALICIOUS",
+    "reason": "상한의 천장도 임의로 변경 가능하여 고정 경계가 아님"
+  },
+  "cap_per_call_risk.sol": {
+    "verdict": "MALICIOUS",
+    "reason": "한 번의 수량만 제한하며 반복 발행 총량은 제한하지 않음"
+  },
+  "contradictory_safe.sol": {
+    "verdict": "BENIGN",
+    "reason": "모순 조건을 모두 만족해야 하는 위험 경로는 실행 불가능"
+  },
+  "unreachable_internal_safe.sol": {
+    "verdict": "BENIGN",
+    "reason": "아무도 호출하지 않는 private 발행 함수는 실행 경로 아님"
+  },
+  "zero_mint_safe.sol": {
+    "verdict": "BENIGN",
+    "reason": "상한 검사는 없지만 발행량이 반드시 0이라 위험 발행 아님"
+  },
+  "late_checked_safe.sol": {
+    "verdict": "BENIGN",
+    "reason": "이 제한된 금고는 매 지급분을 checked 차감; 잔액 초과 중첩 지급은 전체 취소"
+  },
+  "reentry_locked_safe.sol": {
+    "verdict": "BENIGN",
+    "reason": "실제 bool 잠금이 송금 중 같은 출금 재진입을 차단"
+  },
+  "modifier_argument_safe.sol": {
+    "verdict": "BENIGN",
+    "reason": "modifier 인자를 실제 owner 선언에 연결한 상한 발행/무상한 발행"
+  },
+  "modifier_argument_risk.sol": {
+    "verdict": "MALICIOUS",
+    "reason": "modifier 인자를 실제 owner 선언에 연결한 상한 발행/무상한 발행"
+  }
+}

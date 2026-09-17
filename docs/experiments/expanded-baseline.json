@@ -1,0 +1,267 @@
+[
+  {
+    "file": "allowance_implicit_safe.sol",
+    "verdict": "UNCERTAIN",
+    "reasons": [
+      "StandardToken: 공급량 상한: 발행/기본 전송으로 설명하지 못한 상태 쓰기가 있습니다. / 고정 공급량: 승인 한도/잔액 차감으로 설명하지 못한 실행 경로가 있습니다. / 비대칭 전송: 소유자/공급량/잔액/허용목록 초기화를 확인하지 못했습니다. / 임의 코드 실행: 단일 소유자 초기화를 확인하지 못했습니다."
+    ],
+    "evidence": []
+  },
+  {
+    "file": "allowance_reuse_risk.sol",
+    "verdict": "UNCERTAIN",
+    "reasons": [
+      "StandardToken: 공급량 상한: 발행/기본 전송으로 설명하지 못한 상태 쓰기가 있습니다. / 고정 공급량: 승인 한도/잔액 차감으로 설명하지 못한 실행 경로가 있습니다. / 비대칭 전송: 소유자/공급량/잔액/허용목록 초기화를 확인하지 못했습니다. / 임의 코드 실행: 단일 소유자 초기화를 확인하지 못했습니다."
+    ],
+    "evidence": []
+  },
+  {
+    "file": "allowance_risk.sol",
+    "verdict": "UNCERTAIN",
+    "reasons": [
+      "StandardToken: 공급량 상한: 발행/기본 전송으로 설명하지 못한 상태 쓰기가 있습니다. / 고정 공급량: 승인 한도/잔액 차감으로 설명하지 못한 실행 경로가 있습니다. / 비대칭 전송: 소유자/공급량/잔액/허용목록 초기화를 확인하지 못했습니다. / 임의 코드 실행: 단일 소유자 초기화를 확인하지 못했습니다."
+    ],
+    "evidence": []
+  },
+  {
+    "file": "allowance_safe.sol",
+    "verdict": "BENIGN",
+    "reasons": [
+      "공급량은 생성자에서만 설정되고 이후 증가/감소 경로가 없습니다. 모든 실행 경로는 호출자 잔액의 동일량 전송, 호출자가 자기 승인 한도를 설정하는 대입, 또는 잔액과 호출자 승인 한도를 검사·차감하는 대리 전송 범위에 있습니다. 추가 상태 변경이나 외부 호출은 확인되지 않았습니다."
+    ],
+    "evidence": [
+      {
+        "function": "constructor(uint256)",
+        "line": 20
+      }
+    ]
+  },
+  {
+    "file": "cap_amount_risk.sol",
+    "verdict": "UNCERTAIN",
+    "reasons": [
+      "CappedToken: 공급량 상한: 발행 검사식의 효력/증가량 연결을 확인하지 못했습니다. / 고정 공급량: 승인 한도/잔액 차감으로 설명하지 못한 실행 경로가 있습니다. / 비대칭 전송: 소유자/공급량/잔액/허용목록 초기화를 확인하지 못했습니다. / 임의 코드 실행: 직접 예치/임의 실행/기본 출금 이외의 경로는 지원하지 않습니다."
+    ],
+    "evidence": []
+  },
+  {
+    "file": "cap_amount_safe.sol",
+    "verdict": "BENIGN",
+    "reasons": [
+      "지원 범위의 모든 외부 상태 변경 경로를 확인했습니다. 초기 공급량은 0이며, 모든 발행은 동일한 실제 증가량을 더한 공급량이 변경 불가능한 상수 상한 이하인지 검사한 뒤 실행됩니다. 나머지 상태 변경은 호출자의 잔액 차감과 수령자의 동일량 증가입니다. 외부 호출·추가 상태 쓰기는 없으며, 소유자의 상한 내 발행 권한은 중앙화 위험으로 남습니다."
+    ],
+    "evidence": [
+      {
+        "function": "mint(address,uint256,uint256)",
+        "line": 26
+      }
+    ]
+  },
+  {
+    "file": "cap_branch_risk.sol",
+    "verdict": "UNCERTAIN",
+    "reasons": [
+      "CappedToken: 공급량 상한: 분기 또는 반복 경로는 현재 선형 분석에서 지원하지 않습니다. / 고정 공급량: 분기 또는 반복 경로는 현재 선형 분석에서 지원하지 않습니다. / 비대칭 전송: 분기 또는 반복 경로는 현재 선형 분석에서 지원하지 않습니다. / 임의 코드 실행: 분기 또는 반복 경로는 현재 선형 분석에서 지원하지 않습니다."
+    ],
+    "evidence": []
+  },
+  {
+    "file": "cap_branch_safe.sol",
+    "verdict": "UNCERTAIN",
+    "reasons": [
+      "CappedToken: 공급량 상한: 분기 또는 반복 경로는 현재 선형 분석에서 지원하지 않습니다. / 고정 공급량: 분기 또는 반복 경로는 현재 선형 분석에서 지원하지 않습니다. / 비대칭 전송: 분기 또는 반복 경로는 현재 선형 분석에서 지원하지 않습니다. / 임의 코드 실행: 분기 또는 반복 경로는 현재 선형 분석에서 지원하지 않습니다."
+    ],
+    "evidence": []
+  },
+  {
+    "file": "cap_mutable_risk.sol",
+    "verdict": "UNCERTAIN",
+    "reasons": [
+      "CappedToken: 공급량 상한: 발행 검사식의 효력/증가량 연결을 확인하지 못했습니다. / 고정 공급량: 승인 한도/잔액 차감으로 설명하지 못한 실행 경로가 있습니다. / 비대칭 전송: 소유자/공급량/잔액/허용목록 초기화를 확인하지 못했습니다. / 임의 코드 실행: 직접 예치/임의 실행/기본 출금 이외의 경로는 지원하지 않습니다."
+    ],
+    "evidence": []
+  },
+  {
+    "file": "cap_mutable_safe.sol",
+    "verdict": "UNCERTAIN",
+    "reasons": [
+      "CappedToken: 공급량 상한: 발행 검사식의 효력/증가량 연결을 확인하지 못했습니다. / 고정 공급량: 승인 한도/잔액 차감으로 설명하지 못한 실행 경로가 있습니다. / 비대칭 전송: 소유자/공급량/잔액/허용목록 초기화를 확인하지 못했습니다. / 임의 코드 실행: 직접 예치/임의 실행/기본 출금 이외의 경로는 지원하지 않습니다."
+    ],
+    "evidence": []
+  },
+  {
+    "file": "cap_second_risk.sol",
+    "verdict": "MALICIOUS",
+    "reasons": [
+      "생성자에서 지정된 소유자가 외부 발행 함수를 반복 호출할 수 있습니다. 입력 증가량이 공급량과 전송 가능한 주소별 잔액에 동일하게 더해지며, 해당 직접 경로에 공급량 상한 검사가 없어 보유자 지분을 희석할 수 있습니다. 정수 overflow 제한은 경제적 공급량 상한으로 취급하지 않았습니다."
+    ],
+    "evidence": [
+      {
+        "function": "extra(address,uint256)",
+        "line": 41
+      }
+    ]
+  },
+  {
+    "file": "cap_second_safe.sol",
+    "verdict": "BENIGN",
+    "reasons": [
+      "지원 범위의 모든 외부 상태 변경 경로를 확인했습니다. 초기 공급량은 0이며, 모든 발행은 동일한 실제 증가량을 더한 공급량이 변경 불가능한 상수 상한 이하인지 검사한 뒤 실행됩니다. 나머지 상태 변경은 호출자의 잔액 차감과 수령자의 동일량 증가입니다. 외부 호출·추가 상태 쓰기는 없으며, 소유자의 상한 내 발행 권한은 중앙화 위험으로 남습니다."
+    ],
+    "evidence": [
+      {
+        "function": "mint(address,uint256)",
+        "line": 26
+      },
+      {
+        "function": "extra(address,uint256)",
+        "line": 41
+      }
+    ]
+  },
+  {
+    "file": "dead_branch_safe.sol",
+    "verdict": "UNCERTAIN",
+    "reasons": [
+      "CappedToken: 공급량 상한: 분기 또는 반복 경로는 현재 선형 분석에서 지원하지 않습니다. / 고정 공급량: 분기 또는 반복 경로는 현재 선형 분석에서 지원하지 않습니다. / 비대칭 전송: 분기 또는 반복 경로는 현재 선형 분석에서 지원하지 않습니다. / 임의 코드 실행: 분기 또는 반복 경로는 현재 선형 분석에서 지원하지 않습니다."
+    ],
+    "evidence": []
+  },
+  {
+    "file": "delegate_no_deposit_safe.sol",
+    "verdict": "UNCERTAIN",
+    "reasons": [
+      "Vault: 공급량 상한: 지원하지 않는 IR 연산: LowLevelCall. / 고정 공급량: 지원하지 않는 IR 연산: LowLevelCall. / 비대칭 전송: 지원하지 않는 IR 연산: LowLevelCall. / 임의 코드 실행: 사용자 예치 경로와 임의 delegatecall을 함께 확인하지 못했습니다."
+    ],
+    "evidence": []
+  },
+  {
+    "file": "delegate_risk.sol",
+    "verdict": "MALICIOUS",
+    "reasons": [
+      "사용자는 payable 경로로 ETH를 예치하며 msg.value가 호출자의 예치 기록에 더해집니다. 생성자에서 설정된 소유자는 대상 주소와 bytes 데이터를 직접 선택하여 delegatecall을 실행할 수 있습니다. 선택된 코드는 이 컨트랙트의 저장소와 자산 문맥에서 실행되므로 예치 기록 변경이나 자산 이동에 사용될 수 있습니다. 이는 예치 경로와 임의 실행 권한을 연결한 판정이며 문자열 탐지가 아닙니다."
+    ],
+    "evidence": [
+      {
+        "function": "deposit()",
+        "line": 22
+      },
+      {
+        "function": "execute(address,bytes)",
+        "line": 37
+      }
+    ]
+  },
+  {
+    "file": "force_send_safe.sol",
+    "verdict": "UNCERTAIN",
+    "reasons": [
+      "Savings: 공급량 상한: 지원하지 않는 IR 연산: LowLevelCall. / 고정 공급량: 지원하지 않는 IR 연산: LowLevelCall. / 비대칭 전송: 지원하지 않는 IR 연산: LowLevelCall. / 임의 코드 실행: 입력값의 유래를 해석하지 못했습니다."
+    ],
+    "evidence": []
+  },
+  {
+    "file": "internal_risk.sol",
+    "verdict": "UNCERTAIN",
+    "reasons": [
+      "CappedToken: 공급량 상한: 내부 호출/인자 있는 modifier는 지원하지 않습니다. / 고정 공급량: 내부 호출/인자 있는 modifier는 지원하지 않습니다. / 비대칭 전송: 내부 호출/인자 있는 modifier는 지원하지 않습니다. / 임의 코드 실행: 내부 호출/인자 있는 modifier는 지원하지 않습니다."
+    ],
+    "evidence": []
+  },
+  {
+    "file": "internal_safe.sol",
+    "verdict": "UNCERTAIN",
+    "reasons": [
+      "CappedToken: 공급량 상한: 내부 호출/인자 있는 modifier는 지원하지 않습니다. / 고정 공급량: 내부 호출/인자 있는 modifier는 지원하지 않습니다. / 비대칭 전송: 내부 호출/인자 있는 modifier는 지원하지 않습니다. / 임의 코드 실행: 내부 호출/인자 있는 modifier는 지원하지 않습니다."
+    ],
+    "evidence": []
+  },
+  {
+    "file": "ownership_risk.sol",
+    "verdict": "UNCERTAIN",
+    "reasons": [
+      "StandardToken: 공급량 상한: 발행/기본 전송으로 설명하지 못한 상태 쓰기가 있습니다. / 고정 공급량: 승인 한도/잔액 차감으로 설명하지 못한 실행 경로가 있습니다. / 비대칭 전송: 소유자/공급량/잔액/허용목록 초기화를 확인하지 못했습니다. / 임의 코드 실행: 단일 소유자 초기화를 확인하지 못했습니다."
+    ],
+    "evidence": []
+  },
+  {
+    "file": "ownership_safe.sol",
+    "verdict": "UNCERTAIN",
+    "reasons": [
+      "StandardToken: 공급량 상한: 발행/기본 전송으로 설명하지 못한 상태 쓰기가 있습니다. / 고정 공급량: 승인 한도/잔액 차감으로 설명하지 못한 실행 경로가 있습니다. / 비대칭 전송: 소유자/공급량/잔액/허용목록 초기화를 확인하지 못했습니다. / 임의 코드 실행: 단일 소유자 초기화를 확인하지 못했습니다."
+    ],
+    "evidence": []
+  },
+  {
+    "file": "pause_risk.sol",
+    "verdict": "UNCERTAIN",
+    "reasons": [
+      "CappedToken: 공급량 상한: 지원하지 않는 IR 연산: Unary. / 고정 공급량: 지원하지 않는 IR 연산: Unary. / 비대칭 전송: 지원하지 않는 IR 연산: Unary. / 임의 코드 실행: 지원하지 않는 IR 연산: Unary."
+    ],
+    "evidence": []
+  },
+  {
+    "file": "pause_safe.sol",
+    "verdict": "UNCERTAIN",
+    "reasons": [
+      "CappedToken: 공급량 상한: 지원하지 않는 IR 연산: Unary. / 고정 공급량: 지원하지 않는 IR 연산: Unary. / 비대칭 전송: 지원하지 않는 IR 연산: Unary. / 임의 코드 실행: 지원하지 않는 IR 연산: Unary."
+    ],
+    "evidence": []
+  },
+  {
+    "file": "postcheck_safe.sol",
+    "verdict": "UNCERTAIN",
+    "reasons": [
+      "CappedToken: 공급량 상한: 상태 변경 이후 검사식은 이번 버전에서 지원하지 않습니다. / 고정 공급량: 상태 변경 이후 검사식은 이번 버전에서 지원하지 않습니다. / 비대칭 전송: 상태 변경 이후 검사식은 이번 버전에서 지원하지 않습니다. / 임의 코드 실행: 상태 변경 이후 검사식은 이번 버전에서 지원하지 않습니다."
+    ],
+    "evidence": []
+  },
+  {
+    "file": "reentry_risk.sol",
+    "verdict": "UNCERTAIN",
+    "reasons": [
+      "Savings: 공급량 상한: payable 또는 구현 없는 함수는 지원하지 않습니다. / 고정 공급량: 토큰 규칙은 payable 함수를 지원하지 않습니다. / 비대칭 전송: 토큰 규칙은 payable 함수를 지원하지 않습니다. / 임의 코드 실행: 지원하지 않는 연산: GREATER."
+    ],
+    "evidence": []
+  },
+  {
+    "file": "reentry_safe.sol",
+    "verdict": "UNCERTAIN",
+    "reasons": [
+      "Savings: 공급량 상한: payable 또는 구현 없는 함수는 지원하지 않습니다. / 고정 공급량: 토큰 규칙은 payable 함수를 지원하지 않습니다. / 비대칭 전송: 토큰 규칙은 payable 함수를 지원하지 않습니다. / 임의 코드 실행: 지원하지 않는 연산: GREATER."
+    ],
+    "evidence": []
+  },
+  {
+    "file": "revert_branch_safe.sol",
+    "verdict": "UNCERTAIN",
+    "reasons": [
+      "CappedToken: 공급량 상한: 분기 또는 반복 경로는 현재 선형 분석에서 지원하지 않습니다. / 고정 공급량: 분기 또는 반복 경로는 현재 선형 분석에서 지원하지 않습니다. / 비대칭 전송: 분기 또는 반복 경로는 현재 선형 분석에서 지원하지 않습니다. / 임의 코드 실행: 분기 또는 반복 경로는 현재 선형 분석에서 지원하지 않습니다."
+    ],
+    "evidence": []
+  },
+  {
+    "file": "unused_list_safe.sol",
+    "verdict": "UNCERTAIN",
+    "reasons": [
+      "RewardPool: 공급량 상한: 발행/기본 전송으로 설명하지 못한 상태 쓰기가 있습니다. / 고정 공급량: 승인 한도/잔액 차감으로 설명하지 못한 실행 경로가 있습니다. / 비대칭 전송: 제한 전송/소유자 목록 관리 이외의 경로가 있어 비대칭성을 확정하지 못했습니다. / 임의 코드 실행: 단일 소유자 초기화를 확인하지 못했습니다."
+    ],
+    "evidence": []
+  },
+  {
+    "file": "withdraw_risk.sol",
+    "verdict": "UNCERTAIN",
+    "reasons": [
+      "Savings: 공급량 상한: payable 또는 구현 없는 함수는 지원하지 않습니다. / 고정 공급량: 토큰 규칙은 payable 함수를 지원하지 않습니다. / 비대칭 전송: 토큰 규칙은 payable 함수를 지원하지 않습니다. / 임의 코드 실행: 입력값의 유래를 해석하지 못했습니다."
+    ],
+    "evidence": []
+  },
+  {
+    "file": "withdraw_safe.sol",
+    "verdict": "UNCERTAIN",
+    "reasons": [
+      "Savings: 공급량 상한: payable 또는 구현 없는 함수는 지원하지 않습니다. / 고정 공급량: 토큰 규칙은 payable 함수를 지원하지 않습니다. / 비대칭 전송: 토큰 규칙은 payable 함수를 지원하지 않습니다. / 임의 코드 실행: 사용자 예치 경로와 임의 delegatecall을 함께 확인하지 못했습니다."
+    ],
+    "evidence": []
+  }
+]
