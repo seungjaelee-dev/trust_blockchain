@@ -3,7 +3,8 @@ FROM python:3.12.3-slim-bookworm
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    HOME=/home/trust1
 WORKDIR /app
 
 # Environment layers stay cached when only analyzer source changes.
@@ -18,6 +19,8 @@ RUN echo '0479d44fdf9c501c25337fdc540419f1593b884a87b47f023da4f1c700fda782  /usr
 
 COPY src/ /app/src/
 COPY scripts/analyze.py /app/scripts/analyze.py
+RUN mkdir -p /home/trust1 \
+    && chown 10001:10001 /home/trust1
 USER 10001:10001
 ENTRYPOINT ["python", "/app/scripts/analyze.py", "--solc", "/usr/local/bin/solc"]
 CMD ["/input"]
