@@ -4,7 +4,9 @@ __pycache__/
 venv/
 .pytest_cache/
 .mypy_cache/
-artifacts/
+artifacts/*
+!artifacts/docker/
+!artifacts/docker/solc-0.8.20
 results/
 *.egg-info/
 dist/
