@@ -48,5 +48,34 @@
 - `docs/project-flow-guide.html` 추가. 탭 구조로 문제 기초, 실행 흐름, 폴더 지도, 판정 규칙, 심사 답변, 말로 설명 연습을 정리.
 - 실제 호출 흐름은 `scripts/analyze.py` → `src/track1/cli.py` → `src/track1/worker.py` → Slither/solc → `src/track1/verdict.py` → `src/track1/rules/*.py` → stdout JSON으로 설명.
 - 사용자 추가 요청에 따라 Python import/subprocess 흐름, worker와 Slither 연결, `verdict.py`의 `RULES` 호출 구조, 복수 위험 사유의 JSON 집계 방식을 코드 예시와 함께 보강.
+- 이어서 입력 폴더 인자 → `.sol` 파일 필터링 → 기본 `UNCERTAIN` 결과 리스트 → for문 분석 → worker subprocess → Slither 분석 객체 → rules 호출 → JSON 배열 출력의 전체 로직을 8단계 코드 흐름으로 추가.
+- `src/track1/rules/`의 각 파일이 직접 판정 규칙인지 보조 해석기인지, 어떤 위험/오류를 잡기 위한 파일인지, 핵심 함수가 무엇인지 표로 추가. Slither/solc가 제공하는 구조 분석과 프로젝트 자체 판정 로직의 경계도 설명.
 - README의 파일 안내에 HTML 설명서 링크 추가.
 - 문서는 이해 보조 자료이며, 사용자가 내용을 직접 설명해 본 상태는 아직 확인하지 않음.
+
+## 9/18 협업 후보 저장소 코드 비교
+
+- 사용자 요청으로 yunu471/trust404-track01의 analyzer.py, README, run.sh, 검증 스크립트를 읽고 현재 CLI/worker/verdict/규칙 구조와 비교.
+- 비교 대상 커밋: 2792b80a75dcb0b23f2c750575047322c4454730. 외부 코드를 실행하거나 분석기에 합치지는 않음. 성능 수치의 비교 실험은 수행하지 않음.
+- 상대 구현은 Python 표준 라이브러리와 정규식/괄호 매칭을 사용하여 설치가 간단함. 현재 구현은 Slither/solc의 구조 정보와 제한된 경로 해석을 사용하며 오프라인 패키징이 남아 있음.
+- 코드 검토상 상대 구현의 이름 의존, 상한 검사와 실제 증가량 연결 부재, 탐지 없음/개별 탐지 예외 이후 BENIGN 가능성, delegatecall 예치 경로 연결 부재를 확인.
+- typ_immutable_check가 발견한 상태변수 타입에 immutable 문자열을 붙이는 문제와 전체 시간 예산 부재도 확인. 실행 재현 전이므로 실제 오탐 수나 정확도로 보고하지 않음.
+- 협업 제안: 현재 구조 분석 기반을 유지하고 서로 만든 변형 문제로 교차 평가한 뒤, 실패 원인을 검토하여 규칙을 개선. 단순히 두 분석기의 MALICIOUS 결과를 합치는 방식은 피함.
+- 다음 단계 후보는 동일 입력/정답으로 두 구현의 판정·근거·시간을 비교하는 교차 실험. 사용자의 규칙 이해 완료는 아직 확인하지 않음.
+
+## 9/18 Docker 환경 준비
+
+- 사용자에게 Docker 실행 허용을 확인받아 Dockerfile, .dockerignore, docker/requirements.lock,
+  scripts/prepare_docker.py, docs/DOCKER.md를 추가. 분석 로직은 변경하지 않음.
+- 실제 WSL의 Python 3.12.3 및 설치 패키지 51개의 버전을 기록. pip check 정상.
+  Python 버전은 현재 개발 버전이며 대회 필수 버전이라고 확인된 것은 아님.
+- Linux amd64 solc 0.8.20의 SHA256을 확인하고 artifacts/docker로 복사.
+  준비 스크립트와 이미지 빌드 양쪽에서 같은 SHA256을 검사하도록 구성.
+- 복사한 solc를 명시한 WSL CLI 실행 종료 코드 0, 공개5 판정 BENIGN/MALICIOUS/MALICIOUS/BENIGN/MALICIOUS 확인.
+- 개발 시 src/scripts 읽기 전용 연결, 제출 시 소스 포함 이미지, 네트워크 차단·2CPU/4GB 실행,
+  docker save/load와 이미지 tar 해시 기록 명령을 문서화.
+- 현재 Windows 표준 설치 경로와 WSL에 Docker 실행 파일/소켓이 없어 이미지 build/run은 미검증.
+  사용자에게 Docker 설치 상태를 질문. 설치 후 빌드·공개/변형/실패 입력 검증을 이어가야 함.
+- 기본 이미지는 Python 정확한 버전 태그이며 digest 고정 전. 의존성은 버전 lock이며 배포 파일 해시 lock은 아님.
+  최종 이미지 및 라이선스 고지/소스 제공 정리, 오프라인 전달 검증은 미완료.
+- 사용자 Docker 실행 실습/이해 완료는 아직 확인하지 않음.
