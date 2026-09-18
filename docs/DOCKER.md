@@ -2,8 +2,9 @@
 
 ## 현재 상태
 
-Docker 사용은 사용자에게 허용 확인을 받았습니다. 현재 PC에는 Docker가 없어 이미지 빌드와
-컨테이너 시험은 아직 하지 못했습니다. 아래 파일은 준비된 빌드 설정이며 검증 완료 이미지가 아닙니다.
+2026-09-19 기준 Docker 빌드와 네트워크 차단·2CPU/4GB 공개 표본 실행을 확인했습니다.
+사용자도 별도 디렉터리에서 clone·build·run의 정상 동작을 보고했습니다.
+제출용 기본 실행은 [README](../README.md)를 따르세요. 최종 Docker 혼합 오류 입력 검증은 남아 있습니다.
 
 기존 WSL에서 정상 동작한 Python 3.12.3, Slither 0.11.6, crytic-compile 0.4.2,
 solc 0.8.20과 설치 패키지 전체 버전을 고정합니다. Python 버전이 대회 필수 버전이라는
@@ -26,14 +27,12 @@ WSL 터미널에서 `docker version`의 Client와 Server가 모두 보여야 합
 ## 2. 환경과 현재 소스를 이미지로 만들기
 
 ```bash
-source ~/.venvs/trust1/bin/activate
-python scripts/prepare_docker.py
 docker build --platform linux/amd64 -t trust404-track1:dev .
 ```
 
-준비 스크립트는 기존 solc를 복사하고 SHA256을 확인합니다. solc를 새로 설치하거나
-버전을 바꾸지 않습니다. 복사본은 Git에서 제외한 artifacts/docker에 있습니다.
-다른 PC에서 빌드하려면 동일한 Linux solc 파일을 `--solc /path/to/solc`로 지정합니다.
+Linux solc 바이너리는 `artifacts/docker/solc-0.8.20`에 Git으로 포함되어 있습니다.
+새 clone에서도 Python이나 준비 스크립트 없이 build하면 됩니다. Dockerfile이 바이너리의
+SHA256을 검증합니다. 실행 사용자의 HOME은 쓰기 가능한 `/home/trust1`입니다.
 
 Dockerfile은 환경을 먼저 설치하고 소스를 마지막에 복사합니다.
 코드만 바꿔 다시 build하면 기존 환경 설치 단계를 캐시로 재사용할 수 있습니다.
@@ -79,7 +78,7 @@ docker build --platform linux/amd64 -t trust404-track1:submission .
 mkdir -p artifacts
 docker image inspect trust404-track1:submission > artifacts/submission-image.json
 docker save -o artifacts/trust404-track1.tar trust404-track1:submission
-sha256sum artifacts/trust404-track1.tar > artifacts/trust404-track1.tar.sha256
+(cd artifacts && sha256sum trust404-track1.tar > trust404-track1.tar.sha256)
 ```
 
 인터넷이 없는 채점 컴퓨터에서는 전달받은 파일로 실행합니다.
