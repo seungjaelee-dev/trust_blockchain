@@ -11,9 +11,9 @@ Python 3.12.3, Slither 0.11.6, crytic-compile 0.4.2, solc 0.8.20을 사용한다
 ## 먼저 확인할 문서
 
 - README.md: 실행 방법·지원 범위·검증 요약.
-- docs/PLAN.md, docs/PROGRESS.md: 남은 제출 작업과 실제 변경 이력.
+- docs/PROGRESS.md, docs/SUBMISSION.md: 현재 상태와 남은 제출 절차.
 - 출력·분류·실행 변경 전 reference/TRACK1_README.md, reference/schema.json 확인.
-- docs/REPORTING.md, docs/EXPANDED_RULES.md: 설명 구조와 분석 경계. docs/STAGE1.md는 철회된 실험 이력이다.
+- docs/REPORTING.md, docs/EXPANDED_RULES.md: 설명 구조와 현재 분석 경계.
 - THIRD_PARTY_NOTICES.md: 기반 도구 출처와 고지 수집 범위.
 - reference/ 원본을 변경하지 않는다. 공개 표본의 LABEL은 평가용 정답이며 입력 특징이 아니다.
 
@@ -68,4 +68,4 @@ Python 3.12.3, Slither 0.11.6, crytic-compile 0.4.2, solc 0.8.20을 사용한다
 - 의존성 변경 시 버전·라이선스 고지·오프라인 재현을 함께 갱신한다. upstream 고지를 삭제하지 않는다.
 - commit/push/공개는 사용자 요청 범위를 따른다. Git 신원을 꾸며내지 않는다.
 - 병렬 에이전트·대규모 플러그인 설치는 기본 작업에 넣지 않는다.
-- 실제 변경·검증·남은 작업을 PROGRESS에 기록한다. 최종 고정본의 commit/image/hash를 구분한다.
+- PROGRESS는 현재 상태·최근 변경·남은 작업을 짧게 유지한다. 상세 실행 로그와 중간 기록은 results/에 보관하고 대표 검증 근거만 docs/experiments/에 남긴다. 최종 고정본의 commit/image/hash를 구분한다.

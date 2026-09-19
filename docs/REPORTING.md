@@ -20,7 +20,7 @@
 
 ## 2. 실제 P3 출력의 흐름
 
-실제 출력 중 관리자 설정과 전송 설명 두 개를 발췌했습니다. 전체 새 출력은 로컬 `results/sysy-flow.json`, 오프라인 혼합 출력은 [실험 기록](experiments/README.md)에서 확인할 수 있습니다.
+실제 출력 중 관리자 설정과 전송 설명 두 개를 발췌했습니다. 전체 출력은 [혼합60개 JSON](experiments/submission-integration.json)의 `public_P3_Honeypot.sol` 항목에서, 실행 조건은 [검증 자료](experiments/README.md)에서 확인할 수 있습니다.
 
 ```json
 "reasons": [

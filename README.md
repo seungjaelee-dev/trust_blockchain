@@ -178,12 +178,12 @@ Python 패키지는 버전으로 고정하며 solc 바이너리는 SHA256으로 
 
 ## 검증 기록
 
-2026-09-19에 기록한 결과입니다. 이미지·소스 해시와 과거 비교는 [실험 기록](docs/experiments/README.md)에 보존합니다.
+2026-09-19 최종 교차검증 결과입니다. 이미지·소스 해시와 비교 실험의 범위는 [검증 자료](docs/experiments/README.md)에 있습니다.
 
 | 검증 | 결과 | 근거 |
 | --- | --- | --- |
-| 현재 코드 전체 회귀 | 31개 테스트 통과, 198.769초 | [제출 검증](docs/experiments/submission-check.json) |
-| 오프라인 혼합 입력 | 공개5·개발40·장부14·문법오류1, 60/60 기대 판정 일치, 38.276초 | [제출 검증](docs/experiments/submission-check.json) |
+| 현재 코드 전체 회귀 | 31개 테스트 통과, 248.133초 | [최종 검증](docs/experiments/release-crosscheck.json) |
+| 오프라인 혼합 입력 | 공개5·개발40·장부14·문법오류1, 60/60 기대 판정 일치, 83.554초 | [최종 검증](docs/experiments/release-crosscheck.json) |
 | 실행 자원·출력 | 네트워크 차단, 2CPU/4GB, 추가 swap 없음; schema·근거 위치·오류 격리 통과 | [실제 JSON](docs/experiments/submission-integration.json) |
 | 의미 보존·실패 반례 | 이름/Unicode 위치 이동, 다중 위험, 호출 순서, 미지원·timeout 검사 포함 | [테스트](tests/) |
 
@@ -222,12 +222,12 @@ results/                     로컬 결과·로그 (Git 제외)
 공개 라벨과 기대 정답은 평가 자료입니다. Docker 분석 이미지에는 분석 코드와 런타임을 포함하며, 테스트 정답 목록을 판정에 사용하지 않습니다.
 
 - [전체 구조 HTML 설명서](docs/project-flow-guide.html): 내려받아 브라우저로 열면 폴더·Python 호출·규칙 흐름을 탐색할 수 있습니다.
-- [분석 원리와 실습](docs/EXPANDED_RULES.md): 정상·위험 쌍과 지원 한계.
+- [분석 원리와 지원 범위](docs/EXPANDED_RULES.md): 규칙별 역할과 정상·위험 경계.
 - [Docker 상세 안내](docs/DOCKER.md): 개발 시 소스 연결과 이미지 전달.
-- [실험 기록](docs/experiments/README.md): 실제 결과와 비교 자료.
+- [검증 자료](docs/experiments/README.md): 최종 실행 결과와 비교 실험.
 - [판정 근거 읽는 법](docs/REPORTING.md): 함수별 흐름과 이유/위치 연결.
 - [제출 안내](docs/SUBMISSION.md) · [제3자 고지](THIRD_PARTY_NOTICES.md).
-- [개발 지침](AGENTS.md) · [진행 기록](docs/PROGRESS.md) · [남은 계획](docs/PLAN.md).
+- [개발 지침](AGENTS.md) · [현재 상태와 남은 작업](docs/PROGRESS.md).
 
 ## 기반 도구와 기여
 

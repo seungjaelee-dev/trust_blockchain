@@ -5,7 +5,7 @@
 2026-09-19 기준 Docker 빌드와 네트워크 차단·2CPU/4GB 공개 표본 실행을 확인했습니다.
 사용자도 별도 디렉터리에서 clone·build·run의 정상 동작을 보고했습니다.
 제출용 기본 실행은 [README](../README.md)를 따르세요. 문서·고지 정리 후 현재 코드의 정상·위험·문법 오류 혼합60개를
-오프라인 2CPU/4GB에서 검증했습니다. 상세 결과는 [제출 검증](experiments/submission-check.json)에 있습니다.
+오프라인 2CPU/4GB에서 검증했습니다. 상세 결과는 [최종 검증](experiments/release-crosscheck.json)에 있습니다.
 
 기존 WSL에서 정상 동작한 Python 3.12.3, Slither 0.11.6, crytic-compile 0.4.2,
 solc 0.8.20과 설치 패키지 전체 버전을 고정합니다. Python 버전이 대회 필수 버전이라는
