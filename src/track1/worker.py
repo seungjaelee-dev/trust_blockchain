@@ -25,7 +25,7 @@ def main():
         result = {
             "file": source.name,
             "verdict": "UNCERTAIN",
-            "reasons": [f"컴파일 또는 구조 분석 실패({type(error).__name__}). "
+            "reasons": [f"[컴파일·구조 분석] 컴파일 또는 구조 분석 실패({type(error).__name__}). "
                         "분석 구조를 확보하지 못해 판단을 보류합니다. 상세 진단은 stderr에 있습니다."],
             "evidence": [],
         }

@@ -21,6 +21,10 @@ from .checked import validate_checked
 class Unsupported(Exception):
     """해당 경로가 현재 증명 범위를 벗어남."""
 
+    def __init__(self, message, node=None):
+        super().__init__(message)
+        self.node = node
+
 
 SENDER = ("builtin", "msg.sender")
 VALUE = ("builtin", "msg.value")

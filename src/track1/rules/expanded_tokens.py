@@ -4,6 +4,8 @@ Safety requires every reachable path to match an accounted-for operation. Risk
 rules accept only understood guards; unsupported conditions never mean no guard.
 """
 from slither.core.variables.state_variable import StateVariable
+from functools import partial
+from ..reporting import contextual_result, explain
 from .linear import SENDER, ZERO_ADDRESS, Unsupported, symbol
 from .supply import is_balance, index, is_parameter, equal, zero_check
 from .fixed_supply import allowance_type
@@ -125,6 +127,7 @@ def result(verdict, reason, nodes):
 
 def analyze_contract(contract):
     initial, runtime = contract_paths(contract)
+    finish = partial(contextual_result, contexts=initial + runtime)
     if any(f.payable or p.calls for f, p in runtime):
         raise Unsupported("토큰 확장 규칙은 예치/외부 호출을 처리하지 않습니다.")
     values, owners, _ = initialized(initial)
@@ -321,8 +324,9 @@ def analyze_contract(contract):
     if risks:
         if not minted and values.get(supply) == ZERO:
             raise Unsupported("고정 공급량이 0이라 위험 경로에 영향을 받는 보유자 자산을 확인하지 못했습니다.")
-        return {"verdict": "MALICIOUS", "reasons": list(dict.fromkeys(risks)),
-                "evidence": result("MALICIOUS", "", risk_nodes)["evidence"]}
+        return explain({"verdict": "MALICIOUS", "reasons": risks,
+                "_reason_evidence": [[location_evidence(n)] for n in risk_nodes],
+                "evidence": result("MALICIOUS", "", risk_nodes)["evidence"]}, initial + runtime)
     if unexplained:
         raise Unsupported("; ".join(dict.fromkeys(unexplained)))
     supply_reason = "공급량은 초기화 후 변경되지 않습니다. " if not minted else ""
@@ -330,7 +334,7 @@ def analyze_contract(contract):
         supply_reason += "발행 경로에서 실제 증가 후 공급량의 고정된 최종 상한을 확인했습니다. "
     if zero_issues:
         supply_reason += "발행량을 반드시 0으로 제한하는 경로도 확인했습니다. "
-    return result("BENIGN", "지원하는 모든 성공 경로와 내부 호출을 확인했습니다. " + supply_reason +
+    return finish("BENIGN", "지원하는 모든 성공 경로와 내부 호출을 확인했습니다. " + supply_reason +
                   "전송은 자기 잔액 또는 차감되는 승인 한도를 사용하며 외부 호출은 없습니다. " +
                   ("정지 제약은 소유자에게도 동일하게 적용됩니다. " if controlled_bool else "") +
                   ("소유자의 관리 권한은 중앙화 위험으로 남습니다." if owners else ""), safe_nodes)

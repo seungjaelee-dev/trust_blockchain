@@ -16,7 +16,7 @@ def uncertain(path, reason):
     return {
         "file": path.name,
         "verdict": "UNCERTAIN",
-        "reasons": [reason],
+        "reasons": [f"[분석 실행] {reason}"],
         "evidence": [],
     }
 

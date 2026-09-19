@@ -3,7 +3,6 @@
 ## 목표와 사용자
 
 이 저장소의 목표는 TRUST404 ① Smart Contract Threat Detection 제출이다.
-이전에 논의한 ③ 로그·영수증 검증 프로젝트는 이 저장소의 범위가 아니다.
 사용자는 사이버국방학과 2학년 2학기이며 Python/C, pandas와 ML 기반 이상거래탐지 프로젝트 경험이 있다.
 Solidity, 정적 분석, 배포 도구는 입문 단계다. AI로 사용해 본 도구를 이해한다고 가정하지 않는다.
 Windows + VS Code 안의 Codex CLI, WSL 설치됨, Git/GitHub 기본 사용 가능, 1인, 하루 약 3시간이다.

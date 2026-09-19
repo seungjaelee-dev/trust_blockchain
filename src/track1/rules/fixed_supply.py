@@ -4,6 +4,7 @@ from slither.core.solidity_types.mapping_type import MappingType
 from .common import read_contract, runtime, constructor_trace, check_declarations
 from .linear import SENDER, Unsupported, symbol
 from .supply import evidence, index, is_parameter, transfer_balance, zero_check
+from ..reporting import explain
 
 
 def allowance_type(variable):
@@ -76,9 +77,9 @@ def analyze_contract(contract):
             or credit != index(balance, SENDER) or balance_quantity != quantity):
         raise Unsupported("생성자의 초기 공급량/호출자 잔액을 연결하지 못했습니다.")
     check_declarations(traces, {supply[1], balance, allowance})
-    return {"verdict": "BENIGN", "reasons": [
+    return explain({"verdict": "BENIGN", "reasons": [
         "공급량은 생성자에서만 설정되고 이후 증가/감소 경로가 없습니다. 모든 실행 경로는 "
         "호출자 잔액의 동일량 전송, 호출자가 자기 승인 한도를 설정하는 대입, "
         "또는 잔액과 호출자 승인 한도를 검사·차감하는 대리 전송 범위에 있습니다. "
         "추가 상태 변경이나 외부 호출은 확인되지 않았습니다."],
-        "evidence": [evidence(constructor, supply_node)]}
+        "evidence": [evidence(constructor, supply_node)]}, list(traces.items()))

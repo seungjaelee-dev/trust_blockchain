@@ -1,0 +1,4 @@
+usage: analyze.py [-h] [--solc SOLC] [--file-timeout FILE_TIMEOUT]
+                  [--total-timeout TOTAL_TIMEOUT]
+                  input_dir
+analyze.py: error: 존재하는 입력 디렉터리를 지정하세요.

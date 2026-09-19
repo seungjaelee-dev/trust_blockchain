@@ -1,0 +1,79 @@
+{
+  "image": "trust404-track1:ledger-review",
+  "elapsed_seconds": 83.398,
+  "input_count": 60,
+  "matched": 60,
+  "network": "none",
+  "cpus": 2,
+  "memory": "4g",
+  "schema": "passed",
+  "invalid_source": "UNCERTAIN",
+  "missing": 0,
+  "permission_error": false,
+  "date": "2026-09-19",
+  "regression": {
+    "full_suite_tests": 23,
+    "full_suite_seconds": 272.955,
+    "result": "OK",
+    "final_followup_tests": [
+      "permissions_and_burn_invariants: OK",
+      "cap_and_gate_mutations: OK"
+    ]
+  },
+  "scope": "Development cases; not a full 300-case or independent evaluation.",
+  "baseline_image_id": "sha256:6938a06b62ff95bc61ae590b7114724ff695a2de4cadea1e9b16ca59d9bbe38b",
+  "final_image_id": "sha256:795669aa8d83c014b930bc5caa1cecaef7c0f1593116ef655f21d34b74ffee13",
+  "representatives": {
+    "count": 14,
+    "before": {
+      "BENIGN": 0,
+      "MALICIOUS": 0,
+      "UNCERTAIN": 14
+    },
+    "after": {
+      "BENIGN": 6,
+      "MALICIOUS": 5,
+      "UNCERTAIN": 3
+    },
+    "reviewed_label_differences": [
+      "U009: administrator exemption -> MALICIOUS",
+      "M009: unreachable third-party burn -> UNCERTAIN",
+      "M016: nontransferable issuance -> UNCERTAIN"
+    ]
+  },
+  "sha256": {
+    "src/track1/cli.py": "2fcd3695bf35c19084ca8e62613f2606b9976362ea9701851082eda612beaeb7",
+    "src/track1/verdict.py": "1f26c388a436ecf33f1e96f67a591a37adac247a98909eaab160b5b914913b8e",
+    "src/track1/worker.py": "9365dd75106d0c76a7cb96bb970e9d6d0bc6e8ce4b5a47b98d8530ee672a1dd6",
+    "src/track1/__init__.py": "b761531c97955f44f961e016308c6d40d1dbba075621dae5aa5c9fe3a99fe16e",
+    "src/track1/rules/checked.py": "22b8bd643b0876b9463d3ae304da35c0ddea182f1687ad62ab066aad7f063aa3",
+    "src/track1/rules/common.py": "c9cadf55a23dc8c215969401d4e003ef43181fb0e136a2a93c1602c7072f21fc",
+    "src/track1/rules/delegatecall.py": "d1cd42db81f4ccd3eefef063ed837787d9cede05b14b49f3c8ce7f1ee1d27482",
+    "src/track1/rules/expanded_tokens.py": "a29e2715197a275e14b976267c968bbb4f2fca383396f6725a10d62f8298a118",
+    "src/track1/rules/expanded_vaults.py": "463fbc1e89bf45d8288860ad813e5daa6cda198ad25978392e351db29c1e6725",
+    "src/track1/rules/fixed_supply.py": "5813de88d4a0edf75feca9e1fe859c5f846d7045cf6d47f85f38307a2c963203",
+    "src/track1/rules/ledger_operations.py": "7ab902c7b5bb3ad3338a779949c558f3fcc3dd872b9d38c5016b32a1d672a882",
+    "src/track1/rules/linear.py": "2f0958751aa0ba858365f38838a2dccb801086e75de6f1be73a777bbe62b8e39",
+    "src/track1/rules/paths.py": "0967b7397130a7914fb135de89d16b2d489e6da5131a95e20adc36fdce9b863f",
+    "src/track1/rules/supply.py": "90533238c95c17d093773abea22c910538e409f9c6e9892f2bb38edffd59440a",
+    "src/track1/rules/transfer_restrictions.py": "d227ff2341d7b2a580b85c037247ae147a01ac8042df7c62be1597ac50e10c59",
+    "src/track1/rules/__init__.py": "5cd2af57f895d7fd03231c977e4451ac417c5c84ee718fd63bbc804c468bdd0a",
+    "tests/fixtures/variants/ledger/admin_exemption.sol": "ad2f870ef4186bfcfd2569b9c42d3ae54e533ef6e7714c5c1b54856d8b4d75f5",
+    "tests/fixtures/variants/ledger/approval_bypass.sol": "b5b47229b441e9c10f3802176e2078549cc36679f9100e6893e85db69d84c904",
+    "tests/fixtures/variants/ledger/approved_burn.sol": "b2f73b7d6f290d47b0b0f5cd8ee06b2f19b5f777a5f000529ac4ae1971a2752a",
+    "tests/fixtures/variants/ledger/arbitrary_payment.sol": "8bd93a13ab2083b301dc46a5e77ed98e4adbf5fd064554cdbcaa72505db410bb",
+    "tests/fixtures/variants/ledger/bounded_issuance.sol": "1c8041560dfba8f2548de06a821f313eafa9e821124a3528b8183ac74d605637",
+    "tests/fixtures/variants/ledger/delegated.sol": "5558e63118292de30289ee3070d7545e55b956a61d3ca9f9561646da1fc30a88",
+    "tests/fixtures/variants/ledger/deposit_cap.sol": "c49c5b701d7b32fd1ffa3b4852e2fc8a0ea10a6a5d0261a5f3101bcaf234f025",
+    "tests/fixtures/variants/ledger/destination_block.sol": "ab151434110e55c1818a629738cf7ef68520cb9dd7f20fd411bd98d189c11d73",
+    "tests/fixtures/variants/ledger/nontransferable_mint.sol": "9409b09d2f810628cc41abe9759b41ccea94a23b3762e175a2cfe3c1ec7f65bf",
+    "tests/fixtures/variants/ledger/selective_block.sol": "44d844b5253e62d61605b058c71442e887d2cb183ed513f2f48ef699ed6220db",
+    "tests/fixtures/variants/ledger/self_burn.sol": "127cfbbf57f522d4eb3189a35be1113c4adde22af08f2515175a4094cca63ebe",
+    "tests/fixtures/variants/ledger/symmetric_pause.sol": "12053943d3f75151fc0a95822a8ef6ce225042d77808b63876f6f65f417d644c",
+    "tests/fixtures/variants/ledger/unreachable_burn.sol": "5972b8aa008af03109e2e308aa426d8b24ca4874675269d65f32bc348002a574",
+    "tests/fixtures/variants/ledger/wallet.sol": "76b7da1feb005ffc9922c9c283bcc96aa4fa2fd15e54f365617e8934bbcb5381",
+    "tests/test_ledger_operations.py": "2313c5348ee04dfee50d3307932dedc3e8ec23ec527a7f180b253f39fbdb4e2a",
+    "tests/evaluate_ledger_docker.py": "c7420eaaaf7d5e9267a150111526bba2873ca0f9af8ac3ef9be2159306b2a84e",
+    "Dockerfile": "46f08e5c77a88269df0abc3523d5acd41afbf87ced992c1f032c14723df93127"
+  }
+}

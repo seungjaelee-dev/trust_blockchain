@@ -8,6 +8,7 @@ from slither.core.solidity_types.mapping_type import MappingType
 from slither.core.variables.state_variable import StateVariable
 
 from .linear import SENDER, ZERO_ADDRESS, Unsupported, symbol, trace_function
+from ..reporting import explain
 
 
 def evidence(function, node):
@@ -165,20 +166,19 @@ def analyze_contract(contract):
                 raise Unsupported("고정된 유효 공급량 상한값을 확인하지 못했습니다.")
     unbounded = [mint for mint in mints if not mint["caps"]]
     if unbounded:
-        return {
+        return explain({
             "verdict": "MALICIOUS",
             "reasons": ["생성자에서 지정된 소유자가 외부 발행 함수를 반복 호출할 수 있습니다. "
                         "입력 증가량이 공급량과 전송 가능한 주소별 잔액에 동일하게 더해지며, "
                         "해당 직접 경로에 공급량 상한 검사가 없어 보유자 지분을 희석할 수 있습니다. "
                         "정수 overflow 제한은 경제적 공급량 상한으로 취급하지 않았습니다."],
             "evidence": [evidence(m["function"], m["node"]) for m in unbounded],
-        }
-    return {
+        }, list(traces.items()))
+    return explain({
         "verdict": "BENIGN",
         "reasons": ["지원 범위의 모든 외부 상태 변경 경로를 확인했습니다. 초기 공급량은 0이며, "
                     "모든 발행은 동일한 실제 증가량을 더한 공급량이 변경 불가능한 상수 상한 이하인지 "
                     "검사한 뒤 실행됩니다. 나머지 상태 변경은 호출자의 잔액 차감과 수령자의 동일량 증가입니다. "
                     "외부 호출·추가 상태 쓰기는 없으며, 소유자의 상한 내 발행 권한은 중앙화 위험으로 남습니다."],
         "evidence": [evidence(m["function"], n) for m in mints for n in m["cap_nodes"]],
-    }
-
+    }, list(traces.items()))

@@ -92,8 +92,10 @@ class CliTests(unittest.TestCase):
             )
             fake.chmod(0o755)
             started = time.monotonic()
-            data = self.results(self.call_cli(inputs, "--solc", fake, "--file-timeout", "3"))
-            self.assertLess(time.monotonic() - started, 10)
+            # Allow Slither imports on a cold WSL filesystem before the fake
+            # compiler starts. It still sleeps for 60s, so a 10s cutoff must kill it.
+            data = self.results(self.call_cli(inputs, "--solc", fake, "--file-timeout", "10"))
+            self.assertLess(time.monotonic() - started, 20)
             self.assertIn("시간 예산", data[0]["reasons"][0])
             self.assertTrue(marker.is_file(), "가짜 컴파일러까지 실제 실행되어야 한다")
             state = Path("/proc") / marker.read_text() / "stat"

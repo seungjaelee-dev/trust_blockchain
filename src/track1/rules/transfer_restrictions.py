@@ -6,6 +6,7 @@ from slither.core.variables.state_variable import StateVariable
 from .common import read_contract, runtime, constructor_trace, check_declarations
 from .linear import SENDER, Unsupported, symbol
 from .supply import evidence, equal, index, is_parameter, transfer_balance
+from ..reporting import explain
 
 
 def analyze_contract(contract):
@@ -43,8 +44,8 @@ def analyze_contract(contract):
         raise Unsupported("제한 전송/소유자 목록 관리 이외의 경로가 있어 비대칭성을 확정하지 못했습니다.")
     if not transfers or not setters:
         raise Unsupported("발신자 제한과 소유자 전용 목록 변경을 함께 확인하지 못했습니다.")
-    return {"verdict": "MALICIOUS", "reasons": [
+    return explain({"verdict": "MALICIOUS", "reasons": [
         "전송은 발신자의 주소별 허용 상태를 요구합니다. 생성자에서 소유자만 초기 허용되며, "
         "소유자는 수령자의 허용 여부와 무관하게 토큰을 보낼 수 있습니다. 목록 변경도 "
         "소유자만 수행하므로 일반 수령자는 허용되지 않으면 받은 토큰을 다시 전송할 수 없습니다."],
-        "evidence": [evidence(constructor, init_node), *setters, *transfers]}
+        "evidence": [evidence(constructor, init_node), *setters, *transfers]}, list(traces.items()))

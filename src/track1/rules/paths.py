@@ -148,7 +148,7 @@ def trace_paths(function, seed=None, stack=()):
         if node.type not in {NodeType.ENTRYPOINT, NodeType.OTHER_ENTRYPOINT,
                 NodeType.EXPRESSION, NodeType.VARIABLE, NodeType.RETURN,
                 NodeType.IF, NodeType.ENDIF, NodeType.THROW}:
-            raise Unsupported(f"미지원 경로 노드: {node.type.name}.")
+            raise Unsupported(f"미지원 경로 노드: {node.type.name}.", node)
         if node.type == NodeType.THROW:
             continue
         states = [path]
@@ -166,7 +166,7 @@ def trace_paths(function, seed=None, stack=()):
                     op = ir.type.name
                     if op not in {"ADDITION", "SUBTRACTION", "MULTIPLICATION", "EQUAL", "NOT_EQUAL",
                                   "LESS", "LESS_EQUAL", "GREATER", "GREATER_EQUAL", "ANDAND", "OROR"}:
-                        raise Unsupported(f"미지원 경로 연산: {op}.")
+                        raise Unsupported(f"미지원 경로 연산: {op}.", node)
                     a, b = p.read(ir.variable_left), p.read(ir.variable_right)
                     expr = simplify(op, a, b)
                     if op in {"ADDITION", "SUBTRACTION", "MULTIPLICATION"}:
@@ -242,7 +242,7 @@ def trace_paths(function, seed=None, stack=()):
                     p.result = tuple(p.read(v) for v in ir.values)
                     p.stopped = True
                 else:
-                    raise Unsupported(f"미지원 경로 IR: {type(ir).__name__}.")
+                    raise Unsupported(f"미지원 경로 IR: {type(ir).__name__}.", node)
                 following.append(p)
             states = following
         for p in states:
