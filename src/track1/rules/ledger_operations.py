@@ -173,6 +173,7 @@ def analyze_contract(contract):
                 destination_paths.update((id(p), id(other)))
 
     risks, risk_nodes, authorized_transfers = [], [], []
+    risk_kinds = []  # Report identity only; never used to decide a verdict.
     pending_thefts = []
     for f, p, origin, recipient, amount, node, extras in transfers + burns:
         permissions = {("index", index(a, origin), SENDER) for a in allowances}
@@ -203,6 +204,7 @@ def analyze_contract(contract):
         if restriction and owner_guard(p, owners):
             raise Unsupported("관리자 전용 경로의 제약을 일반 보유자 차단으로 해석할 수 없습니다.")
         if id(p) in destination_paths:
+            risk_kinds.append("destination_restriction")
             risks.append("관리자가 지정하는 목적지로의 전송에 일반 보유자만 상태 제약을 받으며 관리자는 우회합니다. 목적지와 제한 상태 모두 관리자 변경 경로에 연결됩니다.")
             risk_nodes.append(node)
             restriction = []
@@ -215,11 +217,13 @@ def analyze_contract(contract):
                 for a, b in [(g[1], g[2]), (g[2], g[1])]):
                 if g[1] in restriction or g[2] in restriction:
                     continue  # A separate symmetric guard still binds the owner.
+                risk_kinds.append("asymmetric_pause")
                 risks.append("관리자가 정지 상태를 변경하고 자신은 전송 제한을 우회합니다. 일반 보유자에게만 적용되는 비대칭 제약입니다.")
                 risk_nodes.append(node)
                 continue
             if (g[0] == "index" and root(g) in lists and g[2] == SENDER
                     and any(loc == g and value == TRUE for _, ip in initial for loc, value, _ in ip.writes)):
+                risk_kinds.append("sender_allowlist")
                 risks.append("배포자는 초기 허용되고 관리자가 발신자 허용 목록을 변경합니다. 일반 수령자의 재전송을 선택적으로 차단할 수 있습니다.")
                 risk_nodes.append(node)
                 continue
@@ -233,11 +237,13 @@ def analyze_contract(contract):
     for node, privileged, burn in pending_thefts:
         if privileged and not authorized_transfers:
             raise Unsupported("관리자 외 보유자의 양수 잔액 도달 경로를 확인하지 못했습니다.")
+        risk_kinds.append("unauthorized_burn" if burn else "unauthorized_transfer")
         risks.append("초기 장부 또는 정상 전송으로 보유한 잔액을 당사자 확인이나 승인 한도 차감 없이 "
                      + ("소각할 수 있습니다." if burn else "다른 주소로 이전할 수 있습니다."))
         risk_nodes.append(node)
     if risks:
         return explain({"verdict": "MALICIOUS", "reasons": risks,
+                        "_reason_kinds": risk_kinds,
                         "_reason_evidence": [[location(n)] for n in risk_nodes],
                         "evidence": [location(n) for n in risk_nodes]}, initial + runtime)
     operations = "/".join(name for name, present in (("전송", transfers), ("소각", burns)) if present)

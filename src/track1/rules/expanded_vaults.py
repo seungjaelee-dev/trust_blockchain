@@ -132,7 +132,7 @@ def analyze_contract(contract):
                       "소유자 회수/임의 실행만으로 탈취로 분류하지 않습니다. 일반 프로젝트의 보편적 안전 보장은 아닙니다.", sweeps + executions + withdrawals)
     if executions:
         return finish("MALICIOUS", "사용자 ETH 예치와 소유자 제어 대상·데이터의 delegatecall이 연결됩니다. "
-                      "선택한 코드는 이 금고의 저장소·자산 문맥에서 실행되어 예치 기록이나 자산을 변경할 수 있습니다.", deposits + executions)
+                      "선택한 코드는 이 금고의 저장소·자산 문맥에서 실행되어 예치 기록이나 자산을 변경할 수 있습니다.", deposits + executions, kind="delegatecall")
     if routes:
         return finish("MALICIOUS", "사용자의 ETH는 본인 예치 장부에 기록되지만 관리자는 수령자와 지급액을 직접 선택하여 예치 장부 차감 없이 송금할 수 있습니다. "
                       "관리자가 자신의 주소로 예치 자산을 지급받을 수 있는 경로입니다.", deposits + routes)

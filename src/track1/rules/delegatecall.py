@@ -58,5 +58,5 @@ def analyze_contract(contract):
         "사용자는 payable 경로로 ETH를 예치하며 msg.value가 호출자의 예치 기록에 더해집니다. "
         "생성자에서 설정된 소유자는 대상 주소와 bytes 데이터를 직접 선택하여 delegatecall을 실행할 수 있습니다. "
         "선택된 코드는 이 컨트랙트의 저장소와 자산 문맥에서 실행되므로 예치 기록 변경이나 자산 이동에 "
-        "사용될 수 있습니다. 이는 예치 경로와 임의 실행 권한을 연결한 판정이며 문자열 탐지가 아닙니다."],
-        "evidence": [item for _, item in deposits] + executions}, list(traces.items()))
+        "사용될 수 있습니다."],
+        "evidence": [item for _, item in deposits] + executions}, list(traces.items()), kind="delegatecall")

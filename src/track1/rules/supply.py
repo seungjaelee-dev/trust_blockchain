@@ -173,7 +173,7 @@ def analyze_contract(contract):
                         "해당 직접 경로에 공급량 상한 검사가 없어 보유자 지분을 희석할 수 있습니다. "
                         "정수 overflow 제한은 경제적 공급량 상한으로 취급하지 않았습니다."],
             "evidence": [evidence(m["function"], m["node"]) for m in unbounded],
-        }, list(traces.items()))
+        }, list(traces.items()), kind="unbounded_mint")
     return explain({
         "verdict": "BENIGN",
         "reasons": ["지원 범위의 모든 외부 상태 변경 경로를 확인했습니다. 초기 공급량은 0이며, "

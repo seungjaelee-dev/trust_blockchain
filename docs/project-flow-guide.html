@@ -1,1443 +1,895 @@
 <!doctype html>
-<html lang="ko">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>TRUST404 분석기 전체 흐름 설명서</title>
-  <style>
-    :root {
-      color-scheme: light;
-      --bg: #f7f8fb;
-      --paper: #ffffff;
-      --ink: #1b1f2a;
-      --muted: #5f6678;
-      --line: #d8deea;
-      --soft: #eef3ff;
-      --blue: #315ccf;
-      --green: #157a4e;
-      --red: #bd3b3b;
-      --yellow: #8a6500;
-      --purple: #6d48a8;
-      --code: #f0f2f7;
-    }
-
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: var(--bg);
-      color: var(--ink);
-      line-height: 1.65;
-    }
-
-    header {
-      background: var(--paper);
-      border-bottom: 1px solid var(--line);
-    }
-
-    .wrap {
-      width: min(1180px, calc(100% - 32px));
-      margin: 0 auto;
-    }
-
-    .hero {
-      padding: 32px 0 24px;
-      display: grid;
-      grid-template-columns: 1.35fr 0.65fr;
-      gap: 24px;
-      align-items: start;
-    }
-
-    h1, h2, h3 {
-      line-height: 1.25;
-      margin: 0 0 12px;
-      font-weight: 650;
-    }
-
-    h1 { font-size: clamp(28px, 5vw, 48px); }
-    h2 { font-size: clamp(22px, 3vw, 32px); }
-    h3 { font-size: 20px; }
-
-    p { margin: 0 0 12px; }
-
-    code, pre {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      background: var(--code);
-      border-radius: 6px;
-    }
-
-    code { padding: 2px 5px; }
-
-    pre {
-      padding: 14px;
-      overflow: auto;
-      border: 1px solid var(--line);
-    }
-
-    .pill-row, .tabs, .chips {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-
-    .pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 10px;
-      border: 1px solid var(--line);
-      border-radius: 999px;
-      background: var(--paper);
-      color: var(--muted);
-      font-size: 14px;
-    }
-
-    .card {
-      background: var(--paper);
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      padding: 18px;
-    }
-
-    .main {
-      padding: 24px 0 48px;
-      display: grid;
-      gap: 24px;
-    }
-
-    .tabs {
-      position: sticky;
-      top: 0;
-      z-index: 2;
-      padding: 12px 0;
-      background: color-mix(in srgb, var(--bg) 85%, transparent);
-      backdrop-filter: blur(8px);
-    }
-
-    button {
-      font: inherit;
-      border: 1px solid var(--line);
-      background: var(--paper);
-      color: var(--ink);
-      border-radius: 6px;
-      padding: 9px 12px;
-      cursor: pointer;
-    }
-
-    button[aria-selected="true"], button.active {
-      background: var(--blue);
-      color: white;
-      border-color: var(--blue);
-    }
-
-    section.panel { display: none; }
-    section.panel.active { display: grid; gap: 24px; }
-
-    .grid-2 {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 16px;
-    }
-
-    .grid-3 {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 16px;
-    }
-
-    .muted { color: var(--muted); }
-    .tiny { font-size: 14px; color: var(--muted); }
-    .good { color: var(--green); }
-    .bad { color: var(--red); }
-    .warn { color: var(--yellow); }
-    .accent { color: var(--blue); }
-
-    .flow {
-      display: grid;
-      grid-template-columns: repeat(6, minmax(120px, 1fr));
-      gap: 10px;
-      align-items: stretch;
-    }
-
-    .flow button {
-      min-height: 108px;
-      text-align: left;
-      padding: 12px;
-      border-left: 5px solid var(--blue);
-    }
-
-    .flow strong {
-      display: block;
-      margin-bottom: 6px;
-    }
-
-    .detail {
-      min-height: 210px;
-      border-left: 5px solid var(--blue);
-    }
-
-    .tree {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-    }
-
-    .tree-list {
-      display: grid;
-      gap: 8px;
-    }
-
-    .tree button {
-      text-align: left;
-      display: grid;
-      gap: 4px;
-    }
-
-    .tree button .path {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      font-size: 13px;
-      color: var(--blue);
-      word-break: break-word;
-    }
-
-    .tree button .role {
-      color: var(--muted);
-      font-size: 14px;
-    }
-
-    .legend {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 10px;
-    }
-
-    .dot {
-      width: 11px;
-      height: 11px;
-      border-radius: 50%;
-      display: inline-block;
-      margin-right: 6px;
-      vertical-align: -1px;
-    }
-
-    .runtime { background: var(--blue); }
-    .rule { background: var(--purple); }
-    .test { background: var(--green); }
-    .doc { background: var(--yellow); }
-    .ref { background: var(--red); }
-
-    .call-map {
-      display: grid;
-      gap: 10px;
-    }
-
-    .call-row {
-      display: grid;
-      grid-template-columns: 170px 28px 1fr;
-      gap: 10px;
-      align-items: start;
-      padding: 10px 0;
-      border-bottom: 1px solid var(--line);
-    }
-
-    .call-row:last-child { border-bottom: 0; }
-
-    .box-label {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      background: var(--soft);
-      padding: 8px;
-      border-radius: 6px;
-      word-break: break-word;
-    }
-
-    .arrow {
-      color: var(--blue);
-      font-weight: 700;
-      text-align: center;
-      padding-top: 7px;
-    }
-
-    .table-wrap { overflow-x: auto; }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: var(--paper);
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      overflow: hidden;
-    }
-
-    th, td {
-      text-align: left;
-      vertical-align: top;
-      padding: 11px 12px;
-      border-bottom: 1px solid var(--line);
-    }
-
-    th {
-      background: var(--soft);
-      font-weight: 650;
-    }
-
-    tr:last-child td { border-bottom: 0; }
-
-    .qa {
-      display: grid;
-      gap: 12px;
-    }
-
-    details {
-      background: var(--paper);
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      padding: 12px 14px;
-    }
-
-    summary {
-      cursor: pointer;
-      font-weight: 650;
-    }
-
-    .route {
-      display: grid;
-      gap: 12px;
-    }
-
-    .code-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-      align-items: start;
-    }
-
-    .note-list {
-      display: grid;
-      gap: 10px;
-      margin: 0;
-      padding-left: 20px;
-    }
-
-    .mini-title {
-      display: block;
-      font-weight: 650;
-      margin-bottom: 4px;
-    }
-
-    .route-step {
-      display: grid;
-      grid-template-columns: 38px 1fr;
-      gap: 12px;
-      align-items: start;
-    }
-
-    .num {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      display: grid;
-      place-items: center;
-      background: var(--blue);
-      color: white;
-      font-weight: 700;
-    }
-
-    .warn-box {
-      border-left: 5px solid var(--yellow);
-      background: #fff9e7;
-    }
-
-    .good-box {
-      border-left: 5px solid var(--green);
-      background: #edf8f2;
-    }
-
-    .bad-box {
-      border-left: 5px solid var(--red);
-      background: #fff0f0;
-    }
-
-    .split-note {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
-    }
-
-    .status {
-      padding: 4px 8px;
-      border-radius: 6px;
-      font-weight: 650;
-      white-space: nowrap;
-    }
-
-    .status.good { background: #edf8f2; }
-    .status.bad { background: #fff0f0; }
-    .status.warn { background: #fff9e7; }
-
-    @media (max-width: 900px) {
-      .hero, .grid-2, .grid-3, .tree, .split-note, .code-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .flow {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-
-      .call-row {
-        grid-template-columns: 1fr;
-      }
-
-      .arrow {
-        text-align: left;
-        padding-top: 0;
-      }
-    }
-
-    @media (max-width: 560px) {
-      .wrap { width: min(100% - 20px, 1180px); }
-      .flow { grid-template-columns: 1fr; }
-      button { width: 100%; }
-    }
-  </style>
-</head>
-<body>
-  <header>
-    <div class="wrap hero">
-      <div>
-        <h1>TRUST404 분석기 전체 흐름 설명서</h1>
-        <p>
-          이 HTML은 “내가 만든 도구가 어디서 시작해서 어떤 파일을 거쳐 JSON 결과를 내는지”를 한 번에 보려고 만든 지도입니다.
-          10살 아이에게 설명하듯이 시작하지만, 심사위원 질문에는 바로 답할 수 있도록 핵심 근거까지 넣었습니다.
-        </p>
-        <div class="pill-row">
-          <span class="pill">입력: <code>.sol</code> 폴더</span>
-          <span class="pill">출력: JSON 배열</span>
-          <span class="pill">판정: BENIGN / MALICIOUS / UNCERTAIN</span>
-          <span class="pill">오프라인: 외부 API 없음</span>
-        </div>
-      </div>
-      <div class="card">
-        <h3>제일 짧은 설명</h3>
-        <p>
-          이 프로그램은 Solidity 코드를 “글자”로 찍어 맞히지 않고, Slither/solc로 코드의 뼈대를 읽습니다.
-          그다음 “누가 호출했는지, 어떤 검사를 통과했는지, 어떤 돈 장부가 바뀌는지”를 따라가서 위험하면 막고,
-          확신이 부족하면 정상이라고 우기지 않고 <code>UNCERTAIN</code>으로 둡니다.
-        </p>
-      </div>
-    </div>
-  </header>
-
-  <main class="wrap main">
-    <nav class="tabs" aria-label="설명 탭">
-      <button type="button" class="active" aria-selected="true" data-tab="start">1. 아주 기초</button>
-      <button type="button" aria-selected="false" data-tab="flow">2. 실행 흐름</button>
-      <button type="button" aria-selected="false" data-tab="files">3. 폴더 지도</button>
-      <button type="button" aria-selected="false" data-tab="rules">4. 판정 규칙</button>
-      <button type="button" aria-selected="false" data-tab="judge">5. 심사 답변</button>
-      <button type="button" aria-selected="false" data-tab="practice">6. 말로 설명 연습</button>
-    </nav>
-
-    <section id="start" class="panel active">
-      <div class="grid-2">
-        <article class="card">
-          <h2>1. 이 문제는 무엇을 풀까?</h2>
-          <p>
-            사용자는 지갑에서 계약 서명 창을 볼 때 “이 계약이 내 돈을 빼갈 수 있는지” 잘 모릅니다.
-            이 프로젝트는 <code>.sol</code> 소스코드를 넣으면 실행 전에 위험한 길이 있는지 알려주는 도구입니다.
-          </p>
-          <p>
-            쉬운 비유로 말하면, 스마트 컨트랙트는 자동판매기입니다.
-            겉으로는 “토큰 보내기” 버튼처럼 보여도, 안쪽에 관리자만 몰래 새 쿠폰을 찍는 버튼이나
-            사용자 예치금을 전부 가져가는 버튼이 숨어 있을 수 있습니다.
-          </p>
-        </article>
-        <article class="card">
-          <h2>2. 정답 세 가지</h2>
-          <p><span class="status good">BENIGN</span> 지원하는 범위 안에서 위험한 돈 이동이나 몰래 발행 경로가 없다고 설명할 수 있음.</p>
-          <p><span class="status bad">MALICIOUS</span> 다른 사람 자산 이동, 무제한 발행, 사용자 예치금 회수처럼 차단할 만한 경로가 있음.</p>
-          <p><span class="status warn">UNCERTAIN</span> 루프, import, assembly, 복잡한 외부 호출처럼 아직 안전하게 판단하지 못함.</p>
-        </article>
-      </div>
-
-      <div class="card">
-        <h2>3. 이 도구의 핵심 철학</h2>
-        <div class="split-note">
-          <div>
-            <h3>글자 맞히기 금지</h3>
-            <p>파일명, 주석의 LABEL, 변수 이름만 보고 판단하지 않습니다. 변수 이름이 <code>owner</code>라서 소유자라고 믿는 식으로 만들지 않았습니다.</p>
-          </div>
-          <div>
-            <h3>흐름 보기</h3>
-            <p>“누가 호출했나 → 어떤 require를 통과했나 → 어떤 상태값을 바꿨나 → 사용자가 손해 보나”를 봅니다.</p>
-          </div>
-          <div>
-            <h3>모르면 보류</h3>
-            <p>지원하지 않는 구조를 만나면 <code>BENIGN</code>으로 덮지 않고, 이유를 달아 <code>UNCERTAIN</code>으로 둡니다.</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section id="flow" class="panel">
-      <div class="card">
-        <h2>실행 흐름: 터미널 명령 하나가 JSON으로 바뀌는 과정</h2>
-        <p class="muted">아래 칸을 눌러 보세요. 실제 프로그램의 호출 순서입니다.</p>
-        <div class="flow" id="flowButtons"></div>
-      </div>
-      <article class="card detail" id="flowDetail" aria-live="polite"></article>
-
-      <div class="card">
-        <h2>실제 호출 지도</h2>
-        <div class="call-map">
-          <div class="call-row">
-            <div class="box-label">scripts/analyze.py</div>
-            <div class="arrow">→</div>
-            <div>사용자가 실행하는 문입니다. 프로젝트의 <code>src</code>를 Python 경로에 넣고 <code>track1.cli.main()</code>을 부릅니다.</div>
-          </div>
-          <div class="call-row">
-            <div class="box-label">src/track1/cli.py</div>
-            <div class="arrow">→</div>
-            <div>입력 폴더 바로 아래의 <code>.sol</code> 파일을 모으고, 파일마다 별도 worker 프로세스를 띄웁니다. 시간 초과면 해당 파일만 <code>UNCERTAIN</code>입니다.</div>
-          </div>
-          <div class="call-row">
-            <div class="box-label">src/track1/worker.py</div>
-            <div class="arrow">→</div>
-            <div>한 파일을 Slither로 읽습니다. Slither는 solc를 이용해 AST, CFG, SlithIR 같은 코드 구조를 만듭니다.</div>
-          </div>
-          <div class="call-row">
-            <div class="box-label">src/track1/verdict.py</div>
-            <div class="arrow">→</div>
-            <div>여러 규칙을 같은 계약에 적용합니다. 위험 규칙이 하나라도 확실하면 <code>MALICIOUS</code>, 미지원 핵심 경로가 있으면 <code>UNCERTAIN</code>, 모두 설명되면 <code>BENIGN</code>입니다.</div>
-          </div>
-          <div class="call-row">
-            <div class="box-label">src/track1/rules/*.py</div>
-            <div class="arrow">→</div>
-            <div>실제 위험을 찾습니다. 토큰 발행, 승인 전송, 정지 제한, 금고 예치금, delegatecall, 재진입 같은 흐름을 봅니다.</div>
-          </div>
-          <div class="call-row">
-            <div class="box-label">stdout JSON</div>
-            <div class="arrow">✓</div>
-            <div>심사용 출력입니다. 진행 로그는 stderr로 보내서 stdout에는 JSON 배열 하나만 남깁니다.</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <h2>Python 파일끼리 어떻게 호출하나?</h2>
-        <p>
-          이 프로젝트는 “한 파일이 모든 일을 다 하는 구조”가 아닙니다.
-          가장 바깥의 <code>scripts/analyze.py</code>는 문 역할만 하고, 실제 일은 <code>src/track1</code> 안쪽으로 계속 넘깁니다.
-          Python에서는 다른 파일의 함수를 <code>import</code>해서 부를 수 있고, 이 프로젝트는 그 방식을 씁니다.
-        </p>
-        <div class="code-grid">
-          <div>
-            <h3>1. 사용자가 부르는 문</h3>
-            <pre><code># scripts/analyze.py
-sys.path.insert(0, ".../src")
-from track1.cli import main
-
-if __name__ == "__main__":
-    raise SystemExit(main())</code></pre>
-            <p class="tiny">
-              뜻: <code>src</code> 폴더를 Python이 찾을 수 있게 하고,
-              <code>track1/cli.py</code> 안의 <code>main()</code>을 실행합니다.
-            </p>
-          </div>
-          <div>
-            <h3>2. 파일마다 worker 실행</h3>
-            <pre><code># src/track1/cli.py
-process = subprocess.Popen([
-    sys.executable,
-    "worker.py",
-    source,
-    solc,
-    output
-])</code></pre>
-            <p class="tiny">
-              뜻: <code>.sol</code> 하나마다 새 Python 프로세스를 띄웁니다.
-              한 파일이 터져도 전체 프로그램이 같이 죽지 않게 하기 위한 구조입니다.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <h2>worker 안에서는 무슨 일이 일어나나?</h2>
-        <div class="code-grid">
-          <div>
-            <h3>Slither로 Solidity 읽기</h3>
-            <pre><code># src/track1/worker.py
-from slither.slither import Slither
-from track1.verdict import analyze
-
-analysis = Slither(str(source), solc=str(solc))
-result = analyze(analysis, source)</code></pre>
-            <p>
-              <code>Slither(...)</code>가 Solidity 파일을 읽고, 함수·변수·조건·중간 표현을 담은 분석 객체를 만듭니다.
-              그 객체를 <code>verdict.analyze()</code>에 넘겨서 우리 규칙으로 판정합니다.
-            </p>
-          </div>
-          <div>
-            <h3>왜 stdout을 조심하나?</h3>
-            <pre><code># src/track1/worker.py
-os.dup2(2, 1)
-output.write_text(json.dumps(result))</code></pre>
-            <p>
-              채점 stdout에는 JSON 배열 하나만 나와야 합니다.
-              그래서 worker의 일반 출력은 stderr로 돌리고, 결과는 임시 파일에 써서
-              부모 <code>cli.py</code>가 읽게 합니다.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <h2>전체 로직을 코드 흐름으로 따라가기</h2>
-        <p>
-          아래 순서가 이 프로그램의 뼈대입니다.
-          문법을 아직 다 몰라도 “데이터가 어디서 어디로 넘어가는지”만 잡으면 코드를 읽을 수 있습니다.
-          입력 폴더가 들어오고, <code>.sol</code> 파일들이 리스트가 되고, for문으로 하나씩 분석되고,
-          각 결과가 다시 리스트에 담긴 뒤 JSON으로 출력됩니다.
-        </p>
-        <div class="route">
-          <div class="route-step">
-            <div class="num">1</div>
-            <div>
-              <strong>사용자가 폴더를 인자로 준다</strong>
-              <pre><code>python scripts/analyze.py reference/public</code></pre>
-              <p>
-                여기서 <code>reference/public</code>이 입력 폴더입니다.
-                Python 코드 안에서는 이 값이 <code>args.input_dir</code>가 됩니다.
-              </p>
-            </div>
-          </div>
-          <div class="route-step">
-            <div class="num">2</div>
-            <div>
-              <strong>입력 폴더 바로 아래의 .sol만 고른다</strong>
-              <pre><code>files = sorted(
-    p.absolute()
-    for p in args.input_dir.iterdir()
-    if p.is_file() and p.suffix == ".sol"
-)</code></pre>
-              <p>
-                <code>iterdir()</code>는 폴더 안 파일들을 하나씩 봅니다.
-                <code>p.suffix == ".sol"</code> 조건 때문에 Solidity 파일만 남습니다.
-                하위 폴더까지 깊게 들어가지는 않습니다.
-              </p>
-            </div>
-          </div>
-          <div class="route-step">
-            <div class="num">3</div>
-            <div>
-              <strong>결과 리스트를 먼저 UNCERTAIN으로 채운다</strong>
-              <pre><code>results = [
-    uncertain(p, "아직 분석하지 못했습니다.")
-    for p in files
-]</code></pre>
-              <p>
-                이건 안전장치입니다.
-                중간에 전체 시간이 부족해져도, 최소한 모든 파일에 대한 기본 결과가 있습니다.
-                나중에 분석에 성공한 파일만 해당 위치가 진짜 결과로 바뀝니다.
-              </p>
-            </div>
-          </div>
-          <div class="route-step">
-            <div class="num">4</div>
-            <div>
-              <strong>for문으로 .sol 파일을 하나씩 분석한다</strong>
-              <pre><code>for index, source in enumerate(files):
-    results[index] = run_file(
-        source,
-        solc,
-        min(args.file_timeout, remaining)
-    )</code></pre>
-              <p>
-                <code>source</code>는 지금 분석할 Solidity 파일 하나입니다.
-                <code>run_file()</code>은 이 파일 하나를 worker에게 맡깁니다.
-                <code>results[index]</code>에 다시 넣기 때문에 입력 파일 순서와 출력 결과 순서가 맞습니다.
-              </p>
-            </div>
-          </div>
-          <div class="route-step">
-            <div class="num">5</div>
-            <div>
-              <strong>run_file이 worker.py를 새 Python으로 실행한다</strong>
-              <pre><code>process = subprocess.Popen([
-    sys.executable,
-    str(worker),
-    str(source),
-    str(solc),
-    str(output),
-])</code></pre>
-              <p>
-                이건 함수 호출이 아니라 “새 Python 프로그램 실행”입니다.
-                worker에게 네 가지를 줍니다.
-                분석할 <code>source</code>, 사용할 <code>solc</code>, 결과를 쓸 <code>output</code> 파일입니다.
-                worker가 죽거나 오래 걸려도 부모 CLI가 통제할 수 있습니다.
-              </p>
-            </div>
-          </div>
-          <div class="route-step">
-            <div class="num">6</div>
-            <div>
-              <strong>worker.py가 Slither에게 Solidity를 읽힌다</strong>
-              <pre><code>analysis = Slither(str(source), solc=str(solc))
-return {
-    "file": source.name,
-    **analyze(analysis, source)
-}</code></pre>
-              <p>
-                <code>Slither(...)</code>가 Solidity 파일의 구조를 만듭니다.
-                그 구조에는 함수, 변수, 조건, 상태 변경, 내부 호출 정보가 들어 있습니다.
-                그다음 <code>track1.verdict.analyze</code>를 import해서 우리 판정 로직에 넘깁니다.
-              </p>
-            </div>
-          </div>
-          <div class="route-step">
-            <div class="num">7</div>
-            <div>
-              <strong>verdict.py가 rules 검사관들을 전부 호출한다</strong>
-              <pre><code>for contract in analysis.contracts:
-    for label, rule in RULES:
-        try:
-            matched.append(rule(contract))
-        except Unsupported as error:
-            missing.append(f"{label}: {error}")</code></pre>
-              <p>
-                <code>RULES</code>에는 <code>supply.analyze_contract</code>,
-                <code>expanded_tokens.analyze_contract</code>,
-                <code>expanded_vaults.analyze_contract</code> 같은 함수들이 들어 있습니다.
-                즉 <code>verdict.py</code>가 각 컨트랙트를 들고 rules 폴더의 검사 함수들을 하나씩 찾아갑니다.
-              </p>
-            </div>
-          </div>
-          <div class="route-step">
-            <div class="num">8</div>
-            <div>
-              <strong>최종 결과를 JSON 배열 하나로 출력한다</strong>
-              <pre><code># worker.py
-output.write_text(json.dumps(result))
-
-# cli.py
-result = json.loads(output.read_text())
-results[index] = result
-print(json.dumps(results, ensure_ascii=False, indent=2))</code></pre>
-              <p>
-                worker는 파일 하나의 결과를 임시 <code>result.json</code>에 씁니다.
-                부모 <code>cli.py</code>는 그 파일을 읽어서 <code>results</code> 리스트에 넣습니다.
-                모든 파일이 끝나면 리스트 전체를 stdout에 JSON 배열 하나로 출력합니다.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section id="files" class="panel">
-      <div class="tree">
-        <div class="card">
-          <h2>폴더와 파일 관계</h2>
-          <p class="muted">왼쪽 목록에서 파일을 누르면 오른쪽에 역할, 들어오는 값, 나가는 값이 보입니다.</p>
-          <div class="legend">
-            <span><span class="dot runtime"></span>실행 코드</span>
-            <span><span class="dot rule"></span>판정 규칙</span>
-            <span><span class="dot test"></span>테스트</span>
-            <span><span class="dot ref"></span>원본 자료</span>
-            <span><span class="dot doc"></span>문서</span>
-          </div>
-          <div class="tree-list" id="fileButtons"></div>
-        </div>
-        <article class="card detail" id="fileDetail" aria-live="polite"></article>
-      </div>
-
-      <div class="card">
-        <h2>폴더를 한 문장으로 외우기</h2>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr><th>폴더</th><th>역할</th><th>심사위원에게 설명할 말</th></tr>
-            </thead>
-            <tbody>
-              <tr><td><code>scripts/</code></td><td>사람이 실행하는 입구와 개발 보조 도구</td><td>채점자는 <code>scripts/analyze.py</code>를 실행하면 됩니다.</td></tr>
-              <tr><td><code>src/track1/</code></td><td>실제 분석 엔진</td><td>CLI, worker, 판정 집계, 규칙이 여기에 있습니다.</td></tr>
-              <tr><td><code>src/track1/rules/</code></td><td>위험을 찾는 규칙 모음</td><td>Slither가 만든 구조 위에서 권한, 돈 장부, 공급량 흐름을 판정합니다.</td></tr>
-              <tr><td><code>tests/</code></td><td>회귀 테스트와 개발 문제</td><td>공개 표본만 맞춘 것이 아니라 변주 문제 40개와 이름 변경 변형도 돌렸습니다.</td></tr>
-              <tr><td><code>reference/</code></td><td>대회 원문, schema, 공개 표본 보존</td><td>판정 규칙을 만들 때 원문 계약과 출력 schema를 기준으로 삼았습니다.</td></tr>
-              <tr><td><code>docs/</code></td><td>계획, 진행, 실험 기록, 설명서</td><td>무엇을 했고 무엇을 아직 못 했는지 숨기지 않고 기록했습니다.</td></tr>
-              <tr><td><code>results/</code></td><td>로컬 실행 결과와 로그</td><td>Git에는 넣지 않는 실행 산출물입니다. 사용자가 2CPU/4GB에서 돌린 결과도 여기에 있습니다.</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
-    <section id="rules" class="panel">
-      <div class="card">
-        <h2>판정 규칙을 아주 쉽게 이해하기</h2>
-        <p>
-          분석기는 먼저 “성공할 수 있는 길”만 봅니다. 예를 들어 <code>require(x &lt;= cap)</code>이 실패하면 거래 전체가 취소되므로,
-          실패한 길은 실제 돈 이동 경로가 아닙니다. 반대로 성공 가능한 길에서 돈이나 공급량이 이상하게 바뀌면 위험합니다.
-        </p>
-      </div>
-
-      <div class="card">
-        <h2>verdict.py가 rules를 호출하는 구조</h2>
-        <p>
-          네가 말한 것처럼 실제 판정 기준은 <code>src/track1/rules/</code> 안에 있고,
-          <code>src/track1/verdict.py</code>가 그 규칙들을 차례대로 호출합니다.
-          쉽게 말하면 <code>verdict.py</code>는 “심사위원장”, rules 파일들은 “각 분야 검사관”입니다.
-        </p>
-        <pre><code># src/track1/verdict.py 의 핵심 구조
-RULES = (
-    ("공급량 상한", supply.analyze_contract),
-    ("고정 공급량", fixed_supply.analyze_contract),
-    ("비대칭 전송", transfer_restrictions.analyze_contract),
-    ("임의 코드 실행", delegatecall.analyze_contract),
-    ("확장 토큰 경로", expanded_tokens.analyze_contract),
-    ("확장 금고 경로", expanded_vaults.analyze_contract),
-)
-
-for label, rule in RULES:
-    try:
-        matched.append(rule(contract))
-    except Unsupported as error:
-        missing.append(f"{label}: {error}")</code></pre>
-        <p>
-          각 rule 함수는 계약 하나를 받아서 세 가지 중 하나를 합니다.
-          확실히 설명할 수 있으면 <code>{"verdict": "...", "reasons": [...], "evidence": [...]}</code>를 돌려줍니다.
-          이 규칙이 다루지 못하는 모양이면 <code>Unsupported</code>를 던지고, 그 이유는 <code>missing</code>에 쌓입니다.
-        </p>
-      </div>
-
-      <div class="card">
-        <h2>위험 이유가 여러 개면 JSON에 어떻게 나오나?</h2>
-        <p>
-          결론부터 말하면, 확실한 위험 판정이 여러 개 나오면 이유도 여러 개 들어갑니다.
-          첫 번째 이유만 버리고 끝내는 구조가 아닙니다.
-        </p>
-        <div class="code-grid">
-          <div>
-            <h3>집계 코드의 핵심</h3>
-            <pre><code># src/track1/verdict.py
-malicious = [
-    f for f in findings
-    if f["verdict"] == "MALICIOUS"
-]
-
-if malicious:
-    return {
-        "verdict": "MALICIOUS",
-        "reasons": [
-            r for f in malicious
-            for r in f["reasons"]
-        ] + limitations,
-        "evidence": [
-            e for f in malicious
-            for e in f["evidence"]
-        ],
-    }</code></pre>
-          </div>
-          <div>
-            <h3>예시로 이해하기</h3>
-            <p>
-              어떤 이상한 <code>.sol</code>이 “상한 없는 발행”과 “사용자 예치금 전체 회수”를 둘 다 갖고 있다고 합시다.
-              토큰 규칙과 금고 규칙이 둘 다 <code>MALICIOUS</code>를 돌려주면,
-              최종 JSON은 <code>verdict: "MALICIOUS"</code> 하나이고
-              <code>reasons</code> 배열 안에 두 이유가 함께 들어갑니다.
-            </p>
-            <pre><code>[
-  {
-    "file": "weird.sol",
-    "verdict": "MALICIOUS",
-    "reasons": [
-      "상한 없는 발행 경로...",
-      "사용자 예치금 전체 회수 경로..."
-    ],
-    "evidence": [
-      {"function": "mint(address,uint256)", "line": 27},
-      {"function": "sweep()", "line": 41}
-    ]
-  }
-]</code></pre>
-          </div>
-        </div>
-        <p>
-          단, 한 규칙이 이미 위험을 충분히 찾았더라도 다른 규칙이 미지원 구조를 만날 수 있습니다.
-          그 경우 최종 판정은 위험 증거가 우선이라 <code>MALICIOUS</code>이고,
-          미지원 설명은 <code>reasons</code> 뒤쪽에 붙을 수 있습니다.
-          반대로 위험 증거가 없고 미지원만 있으면 <code>UNCERTAIN</code>입니다.
-        </p>
-      </div>
-
-      <div class="grid-3">
-        <article class="card good-box">
-          <h3>정상 토큰</h3>
-          <p>내 잔액에서 빠진 만큼 상대방 잔액이 늘고, 대리 전송은 승인 한도를 확인하고 사용한 만큼 차감합니다.</p>
-          <p class="tiny">예: P1, allowance_safe, cap_amount_safe</p>
-        </article>
-        <article class="card bad-box">
-          <h3>위험 토큰</h3>
-          <p>관리자가 상한 없이 발행하거나, 상한 검사를 우회하거나, 남의 잔액을 허락 없이 옮길 수 있습니다.</p>
-          <p class="tiny">예: P2, allowance_risk, cap_branch_risk</p>
-        </article>
-        <article class="card warn-box">
-          <h3>보류</h3>
-          <p>루프, assembly, import, 복잡한 외부 호출처럼 현재 작은 해석기가 안전하게 따라가지 못하는 구조입니다.</p>
-          <p class="tiny">정상이라고 주장하지 않는 것이 포인트입니다.</p>
-        </article>
-      </div>
-
-      <div class="card">
-        <h2>핵심 규칙 6개</h2>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr><th>규칙</th><th>보는 것</th><th>위험 예시</th><th>정상 예시</th></tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>공급량 상한</td>
-                <td>실제로 늘어나는 공급량이 고정 상한 이하인지</td>
-                <td>한 번 발행량만 제한, 다른 분기에서 검사 생략, 상한값 자체 변경</td>
-                <td>모든 발행 경로가 <code>newTotal &lt;= cap</code>을 통과</td>
-              </tr>
-              <tr>
-                <td>전송 권한</td>
-                <td>누구 잔액을 빼는지, 호출자가 그 권한이 있는지</td>
-                <td>아무나 <code>from</code>의 잔액을 빼서 다른 주소로 이동</td>
-                <td>자기 잔액 전송 또는 승인 한도 차감 전송</td>
-              </tr>
-              <tr>
-                <td>승인 재사용</td>
-                <td>승인 한도를 검사한 뒤 사용분을 줄이는지</td>
-                <td>한 번 받은 승인으로 반복 전송 가능</td>
-                <td>전송 후 <code>allowance -= amount</code></td>
-              </tr>
-              <tr>
-                <td>전송 제한</td>
-                <td>정지/목록 제한이 모두에게 같은지</td>
-                <td>일반 사용자는 막히는데 관리자만 통과</td>
-                <td>정지 상태면 관리자도 똑같이 막힘</td>
-              </tr>
-              <tr>
-                <td>금고 예치금</td>
-                <td>사용자 예치 장부와 실제 ETH 송금이 맞물리는지</td>
-                <td>사용자 입금이 있는데 관리자가 전체 ETH를 회수</td>
-                <td>본인 장부에서 차감하고 본인에게만 출금</td>
-              </tr>
-              <tr>
-                <td>delegatecall / 재진입</td>
-                <td>외부 코드 실행이 금고 저장소와 돈을 바꿀 수 있는지, 지급 전후 순서가 안전한지</td>
-                <td>예치금이 있는데 관리자 임의 delegatecall, 지급 후 장부 0 대입</td>
-                <td>예치 경로 없음, 지급 전 차감, 실제 잠금, checked 차감</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div class="card">
-        <h2>src/track1/rules 안의 파일들을 어떻게 읽으면 되나?</h2>
-        <ul class="note-list">
-          <li>
-            <span class="mini-title"><code>paths.py</code>: 길을 먼저 만든다</span>
-            함수 안의 <code>if</code>, <code>require</code>, 내부 함수 호출을 따라가며
-            “이 성공 경로에서는 어떤 조건을 통과했고 어떤 상태값을 썼는지”를 모읍니다.
-          </li>
-          <li>
-            <span class="mini-title"><code>expanded_tokens.py</code>: 토큰 장부를 본다</span>
-            공급량, 잔액, 승인 한도, 전송 제한을 봅니다.
-            상한 없는 발행, 승인 없는 남의 잔액 이동, 승인 재사용 같은 문제를 여기서 잡습니다.
-          </li>
-          <li>
-            <span class="mini-title"><code>expanded_vaults.py</code>: ETH 금고를 본다</span>
-            <code>deposit</code>, <code>withdraw</code>, 전체 회수, <code>delegatecall</code>, 제한된 재진입 구조를 봅니다.
-            사용자 예치금이라는 자산 경로가 있는지가 중요합니다.
-          </li>
-          <li>
-            <span class="mini-title"><code>supply.py</code>, <code>fixed_supply.py</code>, <code>transfer_restrictions.py</code>, <code>delegatecall.py</code>: 초기 공개 표본에서 출발한 규칙</span>
-            처음 공개 5개를 정확히 설명하기 위해 만든 기본 규칙입니다.
-            확장 규칙과 함께 <code>verdict.py</code>에서 모두 호출됩니다.
-          </li>
-          <li>
-            <span class="mini-title"><code>linear.py</code>, <code>checked.py</code>, <code>common.py</code>: 도우미</span>
-            실제 위험명을 붙이는 파일이라기보다, 경로 읽기·산술 검사·공통 로직을 도와주는 파일입니다.
-          </li>
-        </ul>
-      </div>
-
-      <div class="card">
-        <h2>rules 파일 전체 해설: 누가 어떤 오류를 잡나?</h2>
-        <p>
-          <code>rules/</code> 안의 파일이 많아 보이는 이유는 “위험을 직접 판정하는 규칙”과
-          “그 규칙들이 코드를 읽도록 도와주는 도구”가 함께 들어 있기 때문입니다.
-          Slither가 제공하는 것은 Solidity 구조이고, 아래 파일들은 그 구조를 대회 기준에 맞게 해석하는 자체 판정 계층입니다.
-        </p>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>파일</th>
-                <th>역할</th>
-                <th>잡으려는 문제</th>
-                <th>핵심 코드/함수</th>
-                <th>어떻게 이해하면 되나</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td><code>expanded_tokens.py</code></td>
-                <td>확장 토큰 판정 규칙</td>
-                <td>상한 우회 발행, 엉뚱한 수량 검사, 가변 상한, 승인 없는 전송, 승인 재사용, 관리자만 우회하는 정지 제한</td>
-                <td><code>analyze_contract()</code>, <code>transfer_shape()</code>, <code>cap_bounds()</code>, <code>capped()</code></td>
-                <td>토큰 장부 검사관입니다. “공급량과 잔액이 어떻게 늘고 줄었나”, “그 전에 올바른 검사를 했나”를 봅니다.</td>
-              </tr>
-              <tr>
-                <td><code>expanded_vaults.py</code></td>
-                <td>확장 ETH 금고 판정 규칙</td>
-                <td>사용자 예치금 전체 회수, 예치금과 임의 <code>delegatecall</code> 연결, 제한된 재진입 위험</td>
-                <td><code>analyze_contract()</code></td>
-                <td>금고 장부 검사관입니다. “사용자가 입금했나”, “출금은 본인에게 가나”, “관리자가 전체 금고를 가져갈 수 있나”를 봅니다.</td>
-              </tr>
-              <tr>
-                <td><code>supply.py</code></td>
-                <td>초기 공급량/발행 규칙</td>
-                <td>소유자의 상한 없는 발행, 공급량과 잔액을 같이 늘리는 직접 mint 경로</td>
-                <td><code>mint_shape()</code>, <code>check_initialization()</code>, <code>analyze_contract()</code></td>
-                <td>P2/P4 같은 공개 표본에서 출발한 규칙입니다. 발행이 실제로 전송 가능한 잔액까지 늘리는지 연결합니다.</td>
-              </tr>
-              <tr>
-                <td><code>fixed_supply.py</code></td>
-                <td>고정 공급량 정상 경계 규칙</td>
-                <td>초기 발행 후 공급량이 변하지 않고, 전송/승인/대리 전송만 있는 정상 ERC20 비슷한 구조</td>
-                <td><code>allowance_type()</code>, <code>approve_shape()</code>, <code>delegated_shape()</code>, <code>analyze_contract()</code></td>
-                <td>P1 같은 정상 토큰을 설명하기 위한 규칙입니다. 대리 전송에서 승인 한도 차감이 있는지 봅니다.</td>
-              </tr>
-              <tr>
-                <td><code>transfer_restrictions.py</code></td>
-                <td>비대칭 전송 제한 규칙</td>
-                <td>소유자는 전송 가능하지만 일반 사용자는 목록/상태 때문에 전송이 막히는 구조</td>
-                <td><code>analyze_contract()</code></td>
-                <td>P3 같은 honeypot 구조를 봅니다. “소유자 초기 허용 + 소유자 목록 관리 + 발신자 제한”이 연결되는지 확인합니다.</td>
-              </tr>
-              <tr>
-                <td><code>delegatecall.py</code></td>
-                <td>초기 delegatecall 위험 규칙</td>
-                <td>사용자 예치 경로와 소유자 제어 <code>delegatecall</code>이 결합된 구조</td>
-                <td><code>analyze_contract()</code></td>
-                <td>P5에서 출발한 규칙입니다. 일반 proxy 전체 판정기가 아니라, 대회 샘플형 위험 연결을 봅니다.</td>
-              </tr>
-              <tr>
-                <td><code>paths.py</code></td>
-                <td>확장 규칙용 경로 해석기</td>
-                <td>직접 위험을 잡기보다, 분기/require/내부 호출을 따라가며 성공 경로를 만들어 줌</td>
-                <td><code>trace_paths()</code>, <code>contract_paths()</code>, <code>Path</code></td>
-                <td>지도 제작자입니다. “이 함수가 성공하려면 어떤 조건을 지나고, 어떤 storage를 쓰는가”를 기록합니다.</td>
-              </tr>
-              <tr>
-                <td><code>linear.py</code></td>
-                <td>초기 규칙용 단순 IR 해석기</td>
-                <td>분기 많은 코드를 일반적으로 풀기보다, 직선 흐름의 입력값·검사식·상태 쓰기를 연결</td>
-                <td><code>Trace</code>, <code>trace_function()</code>, <code>symbol()</code>, <code>Unsupported</code></td>
-                <td>초기 버전의 작은 지도 제작자입니다. 미지원이면 억지로 정상 처리하지 않고 <code>Unsupported</code>로 멈춥니다.</td>
-              </tr>
-              <tr>
-                <td><code>checked.py</code></td>
-                <td>checked 산술 보조 검사</td>
-                <td>Solidity 0.8의 overflow/underflow 검사 때문에 실제로는 멈추는 경로를 위험 실행으로 오인하는 문제</td>
-                <td><code>validate_checked()</code>, <code>affine()</code></td>
-                <td>“계산하다가 거래가 취소될 수 있는가”를 보는 안전장치입니다. 위험 경로처럼 보여도 산술 실패면 실행되지 않을 수 있습니다.</td>
-              </tr>
-              <tr>
-                <td><code>common.py</code></td>
-                <td>초기 규칙 공통 도구</td>
-                <td>생성자/런타임 함수 분리, 선언 범위 검사, 공통 제한 확인</td>
-                <td><code>read_contract()</code>, <code>runtime()</code>, <code>constructor_trace()</code>, <code>check_declarations()</code></td>
-                <td>반복되는 준비 작업을 묶어 둔 파일입니다. 직접 위험명을 붙이기보다 다른 규칙을 도와줍니다.</td>
-              </tr>
-              <tr>
-                <td><code>__init__.py</code></td>
-                <td>패키지 표시 파일</td>
-                <td>위험 탐지 로직 없음</td>
-                <td>모듈 설명 문자열</td>
-                <td>Python에게 이 폴더가 패키지임을 알려주는 파일입니다.</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div class="card">
-        <h2>전부 내가 만든 로직인가?</h2>
-        <p>
-          경계를 정확히 나누면 이렇습니다.
-          Solidity를 파싱하고 AST/CFG/SlithIR 같은 구조를 제공하는 부분은 Slither와 solc가 맡습니다.
-          그 구조를 받아서 “대회 기준으로 BENIGN/MALICIOUS/UNCERTAIN 중 무엇인가”를 정하는 규칙 파일들은 이 프로젝트의 자체 판정 로직입니다.
-        </p>
-        <div class="grid-2">
-          <div class="good-box" style="padding: 14px;">
-            <h3>외부 도구가 해주는 일</h3>
-            <p>Solidity 문법 읽기, 컴파일 가능한 구조 만들기, 함수/변수/CFG/SlithIR 제공.</p>
-            <p class="tiny">주요 도구: solc, Slither</p>
-          </div>
-          <div class="warn-box" style="padding: 14px;">
-            <h3>이 프로젝트가 만든 일</h3>
-            <p>상한 없는 발행인지, 승인 없는 전송인지, 예치금 회수인지, 보류할지 판단하고 JSON 이유와 근거 줄을 만드는 일.</p>
-            <p class="tiny">주요 코드: <code>verdict.py</code>, <code>rules/*.py</code>, <code>cli.py</code></p>
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <h2>왜 P2는 위험이고 P4는 정상인가?</h2>
-        <div class="grid-2">
-          <div>
-            <h3>P2 HiddenMint</h3>
-            <p>
-              관리자가 <code>mint</code>를 반복 호출해 <code>totalSupply</code>와 누군가의 잔액을 늘릴 수 있습니다.
-              그런데 “최종 공급량이 여기까지만”이라는 고정 상한 검사가 없습니다.
-              그래서 기존 보유자의 지분이 희석될 수 있어 <code>MALICIOUS</code>입니다.
-            </p>
-          </div>
-          <div>
-            <h3>P4 CappedMint</h3>
-            <p>
-              발행은 가능하지만, 발행 뒤의 공급량이 고정 상한을 넘지 않는지 검사합니다.
-              즉 “쿠폰을 찍을 수는 있지만 총 쿠폰 수의 천장은 못 뚫는다”는 뜻이라 대회 경계에서는 <code>BENIGN</code>입니다.
-            </p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section id="judge" class="panel">
-      <div class="card">
-        <h2>심사위원 질문에 답하는 짧은 말</h2>
-        <p class="muted">그대로 외우기보다, 본인 말투로 바꿔서 설명하면 됩니다.</p>
-      </div>
-      <div class="qa">
-        <details open>
-          <summary>이 도구는 단순 키워드 매칭인가요?</summary>
-          <p>
-            아닙니다. 파일명, 주석 라벨, 문자열로 판정하지 않습니다.
-            Slither/solc가 만든 코드 구조를 읽고, 변수 선언 객체와 SlithIR 연산을 따라가며
-            조건, 상태 변경, 외부 호출 순서를 봅니다. 예를 들어 modifier 이름이 <code>onlyOwner</code>인지보다
-            실제 조건이 <code>msg.sender == owner</code>인지 봅니다.
-          </p>
-        </details>
-        <details>
-          <summary>왜 Slither를 썼나요?</summary>
-          <p>
-            Solidity 파서를 처음부터 만드는 것은 이 기간에 위험합니다.
-            Slither는 이미 AST, 제어 흐름, 중간 표현을 제공하므로 저는 그 위에 대회 라벨에 맞춘 판정 계층을 만들었습니다.
-            기본 Slither detector 결과를 그대로 악성으로 바꾼 것은 아닙니다.
-          </p>
-        </details>
-        <details>
-          <summary>왜 worker 프로세스를 따로 띄우나요?</summary>
-          <p>
-            한 파일이 컴파일에서 멈추거나 너무 오래 걸려도 전체 채점이 죽으면 안 됩니다.
-            그래서 파일마다 worker를 따로 실행하고, 제한 시간이 지나면 그 파일만 <code>UNCERTAIN</code>으로 돌려보냅니다.
-            stdout은 JSON 하나로 깨끗하게 유지하고 로그는 stderr로 보냅니다.
-          </p>
-        </details>
-        <details>
-          <summary>BENIGN은 “완전히 안전”이라는 뜻인가요?</summary>
-          <p>
-            아닙니다. 이 프로젝트의 <code>BENIGN</code>은 “지원 범위 안에서 모든 성공 경로를 설명했고,
-            대회가 악성으로 보는 위험 경로를 찾지 못했다”는 뜻입니다.
-            모든 스마트 컨트랙트 보안 보증이나 수학적 완전 증명은 아닙니다.
-          </p>
-        </details>
-        <details>
-          <summary>UNCERTAIN을 왜 쓰나요?</summary>
-          <p>
-            대회 점수는 정답 +1, 오답 -1, 보류 0입니다.
-            모르는 구조를 무리하게 정상이라고 하면 오답 위험이 커집니다.
-            그래서 루프, import, assembly, 복잡한 외부 호출처럼 근거가 부족한 경우는 솔직하게 보류합니다.
-          </p>
-        </details>
-        <details>
-          <summary>현재 검증 결과는 무엇인가요?</summary>
-          <p>
-            공개 표본 5개와 개발 변형 40개는 기대 판정과 일치했습니다.
-            이름, 주석, 공백, Unicode 주석을 바꾼 의미 보존 변형에서도 판정이 유지되는지 확인했습니다.
-            사용자가 2CPU/4GB WSL에서 개발 40개를 28.704초에 실행한 결과도 일치했습니다.
-            다만 이것은 비공개셋 성능 보장은 아닙니다.
-          </p>
-        </details>
-      </div>
-    </section>
-
-    <section id="practice" class="panel">
-      <div class="card">
-        <h2>남에게 설명하는 순서</h2>
-        <p>심사위원 앞에서는 내부 코드를 처음부터 다 말하지 말고, 아래 5단계로 말하면 흐름이 잡힙니다.</p>
-        <div class="route">
-          <div class="route-step">
-            <div class="num">1</div>
-            <div><strong>문제 정의</strong><br>사용자는 서명 전 계약이 돈을 빼가거나 토큰 공급량을 몰래 바꾸는지 알기 어렵다.</div>
-          </div>
-          <div class="route-step">
-            <div class="num">2</div>
-            <div><strong>입출력 계약</strong><br>입력은 폴더 안의 <code>.sol</code> 파일들, 출력은 파일별 <code>verdict/reasons/evidence</code> JSON이다.</div>
-          </div>
-          <div class="route-step">
-            <div class="num">3</div>
-            <div><strong>분석 방법</strong><br>Slither/solc로 코드 구조를 읽고, 성공 경로의 조건과 상태 변경을 따라간다.</div>
-          </div>
-          <div class="route-step">
-            <div class="num">4</div>
-            <div><strong>위험 판단</strong><br>상한 없는 발행, 승인 없는 전송, 사용자 예치금 회수, delegatecall, 재진입처럼 사용자 손해로 이어지는 경로를 찾는다.</div>
-          </div>
-          <div class="route-step">
-            <div class="num">5</div>
-            <div><strong>정직한 한계</strong><br>지원하지 않는 구조는 정상으로 우기지 않고 <code>UNCERTAIN</code>으로 둔다. 오프라인 패키징과 깨끗한 재현은 제출 전 남은 작업이다.</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="grid-2">
-        <article class="card">
-          <h2>직접 말해보기: P2</h2>
-          <p>
-            “P2는 관리자만 부를 수 있는 발행 함수가 있고, 그 함수가 총공급량과 누군가의 잔액을 늘립니다.
-            그런데 반복 발행을 막는 최종 상한 검사가 없습니다.
-            그래서 기존 사용자의 토큰 가치가 희석될 수 있어 위험으로 봅니다.”
-          </p>
-        </article>
-        <article class="card">
-          <h2>직접 말해보기: P5</h2>
-          <p>
-            “P5는 사용자가 ETH를 예치할 수 있고, 관리자는 임의 주소와 데이터를 골라 delegatecall을 실행할 수 있습니다.
-            delegatecall은 선택한 코드가 이 금고의 저장소 문맥에서 실행되므로 예치 장부나 자산을 바꿀 수 있습니다.”
-          </p>
-        </article>
-      </div>
-
-      <div class="card">
-        <h2>터미널에서 확인하는 명령</h2>
-        <pre><code>wsl -d Ubuntu-24.04
-cd "/mnt/c/Users/seung/OneDrive/바탕 화면/Project/trust1"
-source ~/.venvs/trust1/bin/activate
-
-python scripts/analyze.py reference/public
-python tests/evaluate_variants.py my-run
-python -m unittest discover -s tests -v</code></pre>
-        <p class="tiny">
-          첫 줄은 Windows PowerShell에서, 나머지는 WSL 안에서 실행합니다.
-          <code>results/</code>에는 실행 결과와 로그가 저장됩니다.
-        </p>
-      </div>
-    </section>
-  </main>
-
-  <script>
-    const tabs = document.querySelectorAll("[data-tab]");
-    const panels = document.querySelectorAll(".panel");
-    tabs.forEach((tab) => {
-      tab.addEventListener("click", () => {
-        tabs.forEach((item) => {
-          item.classList.toggle("active", item === tab);
-          item.setAttribute("aria-selected", item === tab ? "true" : "false");
-        });
-        panels.forEach((panel) => panel.classList.toggle("active", panel.id === tab.dataset.tab));
-      });
-    });
-
-    const flowItems = [
-      {
-        title: "1. 명령 실행",
-        file: "scripts/analyze.py",
-        text: "사용자가 python scripts/analyze.py 입력폴더 를 실행합니다. 이 파일은 얇은 문입니다. 실제 일은 src/track1/cli.py에 넘깁니다.",
-        why: "채점자가 기억해야 하는 진입점을 단순하게 만들기 위해서입니다."
-      },
-      {
-        title: "2. 파일 목록 만들기",
-        file: "src/track1/cli.py",
-        text: "입력 폴더 바로 아래의 .sol 파일만 정렬해서 모읍니다. 시작할 때 모든 파일의 기본 결과를 UNCERTAIN으로 준비합니다.",
-        why: "전체 시간이 끝나도 빈 출력이 아니라, 미처리 파일까지 설명 있는 JSON으로 내기 위해서입니다."
-      },
-      {
-        title: "3. worker 격리",
-        file: "src/track1/worker.py",
-        text: "파일 하나마다 별도 프로세스에서 Slither를 실행합니다. stdout 오염을 막기 위해 라이브러리 출력은 stderr로 돌립니다.",
-        why: "한 파일 실패가 전체 채점을 망치지 않게 하기 위해서입니다."
-      },
-      {
-        title: "4. Slither 구조 읽기",
-        file: "Slither + solc",
-        text: "solc가 Solidity를 컴파일 가능한 구조로 읽고, Slither가 함수, CFG, SlithIR, 변수 선언 연결을 제공합니다.",
-        why: "직접 파서를 만들지 않고 검증된 도구 위에서 판정 규칙을 만들기 위해서입니다."
-      },
-      {
-        title: "5. 규칙 적용",
-        file: "src/track1/verdict.py + rules/",
-        text: "각 컨트랙트에 토큰, 금고, delegatecall, 전송 제한 규칙을 적용합니다. Unsupported는 실패가 아니라 '이 구조는 아직 보류'라는 신호입니다.",
-        why: "확실한 위험, 설명 가능한 정상, 모르는 경로를 섞지 않기 위해서입니다."
-      },
-      {
-        title: "6. JSON 출력",
-        file: "stdout",
-        text: "파일마다 file, verdict, reasons, evidence를 담아 JSON 배열 하나로 출력합니다. MALICIOUS에는 위치 근거가 들어갑니다.",
-        why: "자동 채점과 사람이 읽는 근거를 동시에 만족하기 위해서입니다."
-      }
-    ];
-
-    const flowButtons = document.getElementById("flowButtons");
-    const flowDetail = document.getElementById("flowDetail");
-
-    function renderFlow(index) {
-      const item = flowItems[index];
-      [...flowButtons.children].forEach((button, i) => button.classList.toggle("active", i === index));
-      flowDetail.innerHTML = `
-        <h2>${item.title}</h2>
-        <p><code>${item.file}</code></p>
-        <p>${item.text}</p>
-        <p><strong>왜 이렇게 했나:</strong> ${item.why}</p>
-      `;
-    }
-
-    flowItems.forEach((item, index) => {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.innerHTML = `<strong>${item.title}</strong><span>${item.file}</span>`;
-      button.addEventListener("click", () => renderFlow(index));
-      flowButtons.appendChild(button);
-    });
-    renderFlow(0);
-
-    const fileItems = [
-      {
-        path: "scripts/analyze.py",
-        category: "runtime",
-        role: "CLI 시작점",
-        input: "사용자가 준 입력 디렉터리",
-        output: "track1.cli.main() 호출",
-        explain: "채점자와 사용자가 실행할 파일입니다. 프로젝트의 src 폴더를 Python import 경로에 추가합니다."
-      },
-      {
-        path: "src/track1/cli.py",
-        category: "runtime",
-        role: "일괄 처리 관리자",
-        input: ".sol 파일 목록, solc 경로, 시간 제한",
-        output: "파일별 worker 결과를 모은 JSON 배열",
-        explain: "폴더 바로 아래 파일만 처리하고, 실패/시간초과를 파일 단위 UNCERTAIN으로 격리합니다."
-      },
-      {
-        path: "src/track1/worker.py",
-        category: "runtime",
-        role: "파일 하나 분석",
-        input: "한 개의 .sol 파일과 solc",
-        output: "한 파일의 판정 JSON",
-        explain: "Slither를 불러 실제 Solidity 구조를 읽고 verdict.analyze에 넘깁니다."
-      },
-      {
-        path: "src/track1/verdict.py",
-        category: "runtime",
-        role: "판정 집계",
-        input: "Slither analysis 객체",
-        output: "BENIGN / MALICIOUS / UNCERTAIN",
-        explain: "여러 규칙을 적용합니다. 위험 하나가 확실하면 MALICIOUS가 우선이고, 미지원 핵심 경로가 남으면 UNCERTAIN입니다."
-      },
-      {
-        path: "src/track1/rules/paths.py",
-        category: "rule",
-        role: "작은 경로 해석기",
-        input: "Slither 함수 CFG와 SlithIR",
-        output: "성공 경로별 guards, writes, calls",
-        explain: "if, require, 내부 함수 호출을 제한된 범위에서 따라갑니다. 이 파일이 '누가 어떤 길을 지나 무엇을 바꿨는지' 지도입니다."
-      },
-      {
-        path: "src/track1/rules/expanded_tokens.py",
-        category: "rule",
-        role: "토큰 위험 규칙",
-        input: "paths.py가 만든 경로",
-        output: "발행, 전송, 승인, 정지 제한 판정",
-        explain: "공급량 상한, 승인 차감, 남의 잔액 이동, 관리자 예외 제한을 봅니다."
-      },
-      {
-        path: "src/track1/rules/expanded_vaults.py",
-        category: "rule",
-        role: "ETH 금고 위험 규칙",
-        input: "예치/출금/외부 호출 경로",
-        output: "sweep, delegatecall, 제한된 재진입 판정",
-        explain: "사용자 예치 장부와 실제 ETH 송금이 맞는지, 관리자가 전체 금고를 가져갈 수 있는지 봅니다."
-      },
-      {
-        path: "src/track1/rules/linear.py",
-        category: "rule",
-        role: "기존 단순 경로 해석",
-        input: "직선 함수 흐름",
-        output: "초기 공개 표본용 trace",
-        explain: "초기 규칙들이 사용하는 단순 해석기입니다. 확장 규칙 전의 기본 뼈대입니다."
-      },
-      {
-        path: "tests/test_expanded.py",
-        category: "test",
-        role: "확장 규칙 회귀 테스트",
-        input: "개발 문제 40개와 변형",
-        output: "판정 일치, 줄번호, schema 확인",
-        explain: "이름/주석/공백/Unicode를 바꿔도 판정이 유지되는지 확인합니다."
-      },
-      {
-        path: "tests/evaluate_variants.py",
-        category: "test",
-        role: "개발 문제 평가 실행기",
-        input: "tests/fixtures/variants/expanded",
-        output: "results/<label>.json, results/<label>.log",
-        explain: "개발 변형 문제를 CLI로 실제 실행하고 기대 판정과 비교합니다."
-      },
-      {
-        path: "reference/",
-        category: "ref",
-        role: "대회 원본 보존",
-        input: "TRACK1_README, schema, 공개 표본",
-        output: "판정 계약과 테스트 기준",
-        explain: "원본 자료는 바꾸지 않고, 분석 기준과 출력 형식을 여기에서 확인합니다."
-      },
-      {
-        path: "docs/",
-        category: "doc",
-        role: "설명과 기록",
-        input: "실험 결과, 진행 상황, 계획",
-        output: "README 보충 자료",
-        explain: "무엇을 했고 무엇이 한계인지 기록합니다. 포트폴리오 설명 근거이기도 합니다."
-      }
-    ];
-
-    const fileButtons = document.getElementById("fileButtons");
-    const fileDetail = document.getElementById("fileDetail");
-
-    function categoryName(category) {
-      return { runtime: "실행 코드", rule: "판정 규칙", test: "테스트", ref: "원본 자료", doc: "문서" }[category];
-    }
-
-    function renderFile(index) {
-      const item = fileItems[index];
-      [...fileButtons.children].forEach((button, i) => button.classList.toggle("active", i === index));
-      fileDetail.innerHTML = `
-        <h2>${item.path}</h2>
-        <p><span class="dot ${item.category}"></span>${categoryName(item.category)}</p>
-        <p><strong>역할:</strong> ${item.role}</p>
-        <p><strong>들어오는 것:</strong> ${item.input}</p>
-        <p><strong>나가는 것:</strong> ${item.output}</p>
-        <p>${item.explain}</p>
-      `;
-    }
-
-    fileItems.forEach((item, index) => {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.innerHTML = `<span class="path"><span class="dot ${item.category}"></span>${item.path}</span><span class="role">${item.role}</span>`;
-      button.addEventListener("click", () => renderFile(index));
-      fileButtons.appendChild(button);
-    });
-    renderFile(0);
-  </script>
-</body>
-</html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="trust1 분석기의 실제 파일과 함수를 따라 읽는 쉬운 저장소 안내서"><title>trust1 · 코드 한 장이 판정표가 되기까지</title>
+<style>
+:root{color-scheme:light;--bg:#f5f4ef;--paper:#fffefa;--ink:#202d35;--muted:#566770;--line:#d9dfda;--teal:#006b60;--soft:#eaf4ef;--blue:#244db4;--red:#a02d36;--amber:#825d0b;--code:#1c2c35}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:24px}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.8 system-ui,-apple-system,"Segoe UI","Malgun Gothic",sans-serif;word-break:keep-all;overflow-wrap:anywhere}
+a{color:var(--teal);text-underline-offset:4px}
+button,input,select{font:inherit}
+button,summary,select{cursor:pointer}
+button:focus-visible,a:focus-visible,summary:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #c47811;outline-offset:4px}
+button{border:1px solid var(--line);border-radius:9px;padding:9px 14px;background:var(--paper);color:var(--ink)}
+button:hover{border-color:var(--teal)}
+button[aria-pressed=true]{background:var(--teal);border-color:var(--teal);color:white}
+.skip{position:absolute;top:-70px;left:20px;background:white;padding:12px;z-index:5}
+.skip:focus{top:10px}
+.layout{display:grid;grid-template-columns:230px minmax(0,1fr);max-width:1480px;margin:auto}
+.sidebar{position:sticky;top:0;height:100vh;padding:34px 24px;border-right:1px solid var(--line);overflow:auto}
+.brand{font-size:22px;font-weight:800;letter-spacing:-1px}
+.brand span{color:var(--teal)}
+.side-caption{font-size:12px;color:var(--muted);margin:0 0 26px}
+.sidebar nav{display:grid;gap:6px}
+.sidebar nav a{font-size:14px;color:var(--muted);text-decoration:none;padding:7px 10px;border-radius:7px}
+.sidebar nav a:hover,.sidebar nav a.active{background:var(--soft);color:var(--teal)}
+.sidebar nav small{display:inline-block;width:25px;color:var(--teal)}
+.sidebar footer{margin-top:30px;font-size:12px;color:var(--muted)}
+main{min-width:0;padding:50px 5.5% 60px}
+.eyebrow{color:var(--teal);font-size:12px;font-weight:800;letter-spacing:2px}
+.hero{padding:12px 0 35px;border-bottom:1px solid var(--line)}
+h1{font-size:clamp(34px,4.1vw,58px);line-height:1.22;letter-spacing:-2px;margin:18px 0 22px}
+h2{font-size:clamp(23px,2.2vw,31px);line-height:1.35;letter-spacing:-.8px;margin:0 0 8px}
+h3{font-size:19px;line-height:1.5;margin:0 0 10px}
+h4{font-size:16px;margin:16px 0 6px}
+p{margin:0 0 14px}
+.lead{max-width:720px;font-size:19px;line-height:1.8}
+.muted{color:var(--muted)}
+.tag{display:inline-block;padding:3px 9px;border:1px solid var(--line);border-radius:5px;font-size:12px;font-weight:600}
+.tags{display:flex;gap:8px;flex-wrap:wrap}
+.reading{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:25px 0 0}
+.reading a{padding:14px;border-top:2px solid var(--teal);text-decoration:none;color:var(--ink)}
+.reading small{display:block;color:var(--muted);font-size:12px}
+.chapter{padding:40px 0 14px;border-bottom:1px solid var(--line)}
+.chapter-heading{display:flex;gap:15px;margin-bottom:24px}
+.chapter-no{color:var(--teal);font:600 15px/1.8 ui-monospace,monospace;padding-top:5px}
+.chapter-heading p{margin:0;font-size:14px}
+.grid2,.grid3{display:grid;gap:16px;margin:18px 0}
+.grid2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.grid3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.card{padding:23px;background:var(--paper);border:1px solid var(--line);border-radius:12px;min-width:0}
+.card p:last-child{margin-bottom:0}
+.card .big{font-size:25px;font-weight:750;letter-spacing:-1px}
+.m{color:var(--red)}
+.b{color:var(--teal)}
+.u{color:var(--amber)}
+.callout{padding:18px 21px;border-left:3px solid var(--teal);background:var(--soft);margin:20px 0}
+.callout.amber{background:#faf1dd;border-color:var(--amber)}
+.callout p:last-child{margin:0}
+.flow{display:flex;align-items:stretch;gap:9px;margin:22px 0}
+.flow .stop{flex:1;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:15px 10px;text-align:center;min-width:0}
+.flow strong{display:block;font-size:15px}
+.flow small{font-size:12px;color:var(--muted)}
+.arrow{align-self:center;color:var(--teal);font-size:21px}
+.caption{font-size:13px;color:var(--muted)}
+details{background:var(--paper);border:1px solid var(--line);border-radius:9px;margin:12px 0;min-width:0}
+summary{padding:15px 18px;font-weight:650;line-height:1.55}
+details[open]>summary{border-bottom:1px solid var(--line)}
+.detail-body{padding:18px}
+.detail-body>:last-child{margin-bottom:0}
+code{font:13px/1.75 ui-monospace,Consolas,monospace;background:#eaf0ec;padding:2px 5px;border-radius:3px;word-break:break-word}
+pre{background:var(--code);color:#e6f1ed;padding:18px;overflow:auto;border-radius:8px;line-height:1.8;tab-size:4;word-break:normal;overflow-wrap:normal;margin:12px 0}
+pre code{background:transparent;color:inherit;padding:0;word-break:normal}
+.code-detail pre{border-radius:0;margin:0;padding:15px 10px}
+.code-line{display:block;min-height:23px}
+.ln{display:inline-block;width:3.5em;user-select:none;color:#9cb0b9;text-align:right;padding-right:14px}
+.code-meta{font-size:12px;padding:10px 18px;color:var(--muted)}
+.annotation{padding:14px 18px;background:var(--soft);font-size:14px;margin:0;border-radius:0 0 9px 9px}
+.journey{counter-reset:steps;display:grid;gap:12px}
+.step{padding:21px 23px;background:var(--paper);border:1px solid var(--line);border-radius:12px}
+.step h3{display:flex;gap:12px;align-items:center}
+.step h3:before{counter-increment:steps;content:counter(steps);border-radius:50%;background:var(--soft);color:var(--teal);width:30px;height:30px;display:grid;place-items:center;flex-shrink:0;font-size:14px}
+.handoff{font-size:13px;color:var(--teal);font-weight:600}
+.rail{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0}
+.step.current{border:2px solid var(--teal)}
+.step.current h3{color:var(--teal)}
+.mode-note{font-size:13px;color:var(--muted)}
+table{border-collapse:collapse;width:100%;font-size:14px;margin:12px 0}
+th,td{text-align:left;padding:12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:var(--soft);font-weight:650}
+.table-scroll{overflow:auto}
+.file-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.file-card{margin:0}
+.file-card summary small{display:block;font-size:12px;color:var(--muted);font-weight:400;margin-bottom:6px}
+.file-card summary code{font-size:12px}
+.file-card .detail-body{font-size:14px}
+.search{width:100%;padding:12px 15px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);margin:8px 0}
+label{font-weight:650}
+.rule-list{display:grid;gap:8px}
+.rule-list details{margin:0}
+.rule-number{font-family:ui-monospace,monospace;color:var(--teal);padding-right:10px}
+.rule-list summary small{display:block;color:var(--muted);font-weight:400;font-size:12px;margin-left:32px}
+.controls{display:flex;gap:16px;flex-wrap:wrap}
+.controls label{flex:1;min-width:160px;font-size:14px}
+.controls select{display:block;width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;background:white;color:var(--ink);margin-top:6px}
+.result{padding:18px 0 0}
+.result strong{font-size:24px}
+.meter{height:12px;background:#e2e5df;border-radius:99px;overflow:hidden;margin:14px 0}
+.meter span{height:100%;display:block;background:var(--teal)}
+input[type=range]{width:100%;accent-color:var(--teal)}
+.glossary{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.glossary div{border-bottom:1px solid var(--line);padding:12px 0}
+.glossary dt{font-weight:700}
+.glossary dd{margin:4px 0 0;color:var(--muted);font-size:14px}
+.quiz-answer{margin-top:10px;color:var(--teal);font-weight:600}
+.page-footer{padding:25px 0;color:var(--muted);font-size:13px}
+ul,ol{padding-left:24px}
+li{margin:6px 0}
+[hidden]{display:none!important}
+.js-only{display:none}
+.js .js-only{display:block}
+.js .rail.js-only{display:flex}
+.js .controls.js-only{display:flex}
+.folder-map{font:13px/2 ui-monospace,Consolas,monospace;white-space:pre-wrap}
+.mini-label{font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--teal);font-weight:700}
+.print-button{font-size:12px;margin-top:14px}
+.read-link{font-size:13px}
+.sources{font-size:12px}
+.sources code{font-size:11px}
+.toc-mobile{display:none}
+
+@media(max-width:1050px){.layout{grid-template-columns:190px minmax(0,1fr)}
+.sidebar{padding:25px 14px}
+main{padding:35px 4%}
+.grid3{grid-template-columns:1fr}
+.grid3 .card{padding:18px}
+.flow{gap:5px}
+.flow .stop{padding:12px 5px}
+.flow strong{font-size:13px}
+}
+
+@media(max-width:760px){html{scroll-padding-top:15px}
+.layout{display:block}
+.sidebar{position:static;height:auto;padding:16px 20px;border-right:0;border-bottom:1px solid var(--line)}
+.side-caption{margin:0}
+.sidebar nav{display:flex;gap:5px;overflow:auto;margin-top:10px;padding-bottom:3px}
+.sidebar nav a{white-space:nowrap;font-size:12px;flex-shrink:0;padding:5px}
+.sidebar footer{display:none}
+main{padding:22px 20px}
+.hero{padding-top:0}
+h1{font-size:38px}
+.lead{font-size:17px}
+.reading{gap:6px}
+.reading a{padding:10px 3px;font-size:13px}
+.reading small{font-size:11px}
+.chapter{padding-top:30px}
+.chapter-heading{gap:10px}
+.grid2,.file-grid,.glossary{grid-template-columns:1fr}
+.flow{display:grid;grid-template-columns:1fr 22px 1fr;gap:8px}
+.flow .stop:last-child{grid-column:1 / -1}
+.flow .arrow:nth-child(4){display:none}
+.card,.step{padding:18px}
+.code-meta{padding:10px;overflow-wrap:anywhere}
+.annotation{padding:12px}
+.ln{width:2.8em}
+pre{padding:12px}
+.caption{font-size:12px}
+}
+
+.step{min-width:0}
+.chapter-no{flex-shrink:0;white-space:nowrap}
+.code-detail pre{white-space:pre-wrap}
+.code-line{padding-left:3.5em;text-indent:-3.5em;overflow-wrap:anywhere}
+
+@media(max-width:760px){.flow{display:grid;grid-template-columns:1fr 1fr}
+.flow .arrow{display:none}
+.flow .stop:last-child{grid-column:auto}
+.code-line{padding-left:2.8em;text-indent:-2.8em}
+}
+
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}
+}
+
+@media print{body{background:white;font-size:11pt}
+.layout{display:block}
+.sidebar,.js-only,.rail,.print-button{display:none!important}
+main{padding:0}
+.chapter{break-before:auto}
+.card,.step,details{break-inside:avoid}
+pre{white-space:pre-wrap;background:#eee;color:black}
+.hero h1{font-size:30pt}
+a{color:inherit}
+.chapter-heading{break-after:avoid}
+}
+
+</style></head><body><a class="skip" href="#main">본문으로 이동</a><div class="layout"><aside class="sidebar"><div class="brand">trust<span>1</span> / 안내서</div>
+<p class="side-caption">코드를 따라가는 작은 지도</p>
+<nav aria-label="목차"><a href="#overview"><small>01</small>먼저 큰 그림</a><a href="#journey"><small>02</small>파일 한 장의 여행</a><a href="#records"><small>03</small>코드를 기록하는 법</a><a href="#examples"><small>04</small>두 토큰 비교</a><a href="#rules"><small>05</small>일곱 검사 규칙</a><a href="#verdict"><small>06</small>최종 판정과 보류</a><a href="#files"><small>07</small>파일별 역할 지도</a><a href="#runtime"><small>08</small>시간·출력·Docker</a><a href="#reading"><small>09</small>직접 읽는 순서</a><a href="#terms"><small>10</small>쉬운 용어 사전</a></nav>
+<footer>2026.09.19 코드 기준<br>1단계 탐지 확장 철회 상태<br>이 문서는 설명용입니다.<button class="print-button js-only" id="print">인쇄 / PDF 저장</button></footer>
+</aside>
+<main id="main">
+<header class="hero"><div class="eyebrow">TRUST404 TRACK 1 · REPOSITORY GUIDE</div>
+<h1>코드 한 장이<br>판정표가 되기까지.</h1>
+<p class="lead">이 저장소는 <strong>스마트 계약의 설계도를 읽는 검사소</strong>입니다. 누가 돈이나 토큰을 움직일 수 있는지 살펴보고, 이유가 붙은 판정표를 만듭니다.</p>
+<div class="tags"><span class="tag">현재 코드 기준</span><span class="tag">실제 파일·함수 연결</span><span class="tag">인터넷 없이 읽기</span></div>
+<div class="reading"><a href="#overview"><strong>처음 3분</strong><small>큰 그림 → 한 장의 여행</small></a><a href="#examples"><strong>그다음 10분</strong><small>예시 → 규칙 → 판정</small></a><a href="#files"><strong>코드를 열 때</strong><small>파일 지도 → 읽기 순서</small></a></div>
+</header>
+
+<noscript><div class="callout">JavaScript가 꺼져 있습니다. 본문과 실제 코드 펼치기는 읽을 수 있습니다. 판정·시간 실습만 사용할 수 없습니다.</div>
+</noscript><section id="overview" class="chapter"><div class="chapter-heading"><span class="chapter-no">01</span><div><h2>먼저, 이 프로그램은 무엇을 할까?</h2>
+<p class="muted">계약은 돈을 다루는 자판기의 규칙집이라고 생각해 보세요.</p>
+</div>
+</div>
+
+<div class="flow" aria-label="Solidity 입력에서 JSON 판정까지"><div class="stop"><strong>① 설계도</strong><small>입력 폴더의 .sol</small></div>
+<span class="arrow" aria-hidden="true">→</span><div class="stop"><strong>② 구조 읽기</strong><small>solc + Slither</small></div>
+<span class="arrow" aria-hidden="true">→</span><div class="stop"><strong>③ 의미 검사</strong><small>우리의 일곱 규칙</small></div>
+<span class="arrow" aria-hidden="true">→</span><div class="stop"><strong>④ 판정표</strong><small>이유 + 원본 위치</small></div>
+</div>
+
+<p>예를 들어 “주인만 새 쿠폰을 만들 수 있다”는 문장이 있습니다. 검사기는 여기서 멈추지 않습니다. <strong>얼마나 만들 수 있는지, 남에게 보낼 수 있는 쿠폰인지, 다른 사람이 가진 쿠폰에 어떤 영향을 주는지</strong>까지 연결합니다.</p>
+
+<div class="grid3"><article class="card"><p class="mini-label">위험 근거를 찾음</p>
+<div class="big m">MALICIOUS</div>
+<p>대회 기준에 해당하는 위험을 코드 근거로 설명할 수 있습니다.</p>
+</article>
+<article class="card"><p class="mini-label">지원 범위에서 확인</p>
+<div class="big b">BENIGN</div>
+<p>지원하는 계약 모델의 안전 조건을 확인했습니다. 모든 종류의 보안 문제에 대한 보증은 아닙니다.</p>
+</article>
+<article class="card"><p class="mini-label">판단에 필요한 확인 부족</p>
+<div class="big u">UNCERTAIN</div>
+<p>읽지 못한 구조, 실패한 컴파일, 시간 초과 등으로 확정하지 못했습니다.</p>
+</article>
+</div>
+
+<div class="callout"><strong>역할을 세 덩어리로 기억하세요.</strong><p><code>cli / worker</code>는 검사소 운영, <code>rules</code>는 의미 검사, <code>verdict / reporting</code>은 결론과 설명입니다. solc와 Slither는 코드 구조를 얻는 기반 도구입니다.</p>
+</div>
+
+<details><summary>실제로 블록체인에 올리고 돈을 보내 보는 건가요?</summary>
+<div class="detail-body"><p>아닙니다. 현재 분석기는 코드를 컴파일하고 구조를 읽는 <strong>정적 분석</strong>을 합니다. 계약을 블록체인에 배포하거나 공격 거래를 실행하지 않습니다. “이 조건으로 이 길을 지나면 이런 상태 변화가 생긴다”를 지원하는 형태 안에서 추적합니다.</p>
+<p>Slither의 기본 경고 개수를 대회 판정으로 바꾸지도 않습니다. Slither가 제공한 구조를 우리 규칙이 읽고 자산·권한·상한의 관계를 판단합니다.</p>
+</div>
+</details>
+</section>
+<section id="journey" class="chapter"><div class="chapter-heading"><span class="chapter-no">02</span><div><h2>파일 한 장의 여행</h2>
+<p class="muted">아래 순서가 실제 호출 흐름입니다. 코드가 궁금할 때만 펼쳐 보세요.</p>
+</div>
+</div>
+
+<div class="rail js-only" id="step-controls" aria-label="흐름 보기 방식"><button type="button" data-step="all" aria-pressed="true">전체 흐름</button><button type="button" data-step="0" aria-pressed="false">1. 입구</button><button type="button" data-step="1" aria-pressed="false">2. 접수</button><button type="button" data-step="2" aria-pressed="false">3. 검사실</button><button type="button" data-step="3" aria-pressed="false">4. 구조</button><button type="button" data-step="4" aria-pressed="false">5. 규칙</button><button type="button" data-step="5" aria-pressed="false">6. 판정</button><button type="button" data-step="6" aria-pressed="false">7. 설명</button><button type="button" data-step="7" aria-pressed="false">8. 반환</button></div>
+<p class="mode-note js-only" id="step-status" aria-live="polite">8단계를 이어서 읽습니다. 위 버튼으로 한 단계에 집중할 수 있습니다.</p>
+
+<div class="journey">
+<article class="step"><h3>입구로 들어옵니다</h3>
+<p><code>scripts/analyze.py</code>가 <code>cli.main()</code>을 부릅니다. 여기서 “어느 폴더를 검사할지”를 명령 인자로 전달합니다.</p>
+<p class="handoff">입력 폴더 경로 → cli.main()</p>
+<details class="code-detail"><summary>실제 코드 펼치기 · analyze.py</summary>
+<div class="code-meta"><a href="../scripts/analyze.py">scripts/analyze.py</a> · 6–12행 · 현재 파일 발췌</div>
+<pre><code><span class="code-line"><span class="ln" aria-hidden="true">6</span>sys.path.insert(0, str(Path(__file__).resolve().parents[1] / &quot;src&quot;))</span><span class="code-line"><span class="ln" aria-hidden="true">7</span></span><span class="code-line"><span class="ln" aria-hidden="true">8</span>from track1.cli import main</span><span class="code-line"><span class="ln" aria-hidden="true">9</span></span><span class="code-line"><span class="ln" aria-hidden="true">10</span>if __name__ == &quot;__main__&quot;:</span><span class="code-line"><span class="ln" aria-hidden="true">11</span>    raise SystemExit(main())</span><span class="code-line"><span class="ln" aria-hidden="true">12</span></span></code></pre>
+<p class="annotation">import는 다른 파일의 기능을 가져오는 문법입니다. main()을 부르면 실제 접수가 시작됩니다. SystemExit는 main이 돌려준 종료 번호를 운영체제에 전달합니다.</p>
+</details>
+</article>
+
+<article class="step"><h3>명단을 만들고, 시간을 나눕니다</h3>
+<p><code>cli.py</code>는 폴더 <strong>바로 아래</strong>의 <code>.sol</code> 파일을 이름순으로 정렬합니다. 먼저 전부 보류 상태로 준비한 뒤 하나씩 실제 결과로 교체합니다. 도중에 시간이 끝나도 명단에서 파일이 사라지지 않게 하기 위해서입니다.</p>
+<p class="handoff">파일 목록 → run_file(source, solc, 허용 시간)</p>
+<details class="code-detail"><summary>실제 코드 펼치기 · cli.py</summary>
+<div class="code-meta"><a href="../src/track1/cli.py">src/track1/cli.py</a> · 111–116행 · 현재 파일 발췌</div>
+<pre><code><span class="code-line"><span class="ln" aria-hidden="true">111</span>    results = [</span><span class="code-line"><span class="ln" aria-hidden="true">112</span>        uncertain(p, &quot;전체 시간 예산 소진으로 이 파일은 분석하지 못했습니다.&quot;)</span><span class="code-line"><span class="ln" aria-hidden="true">113</span>        for p in files</span><span class="code-line"><span class="ln" aria-hidden="true">114</span>    ]  ## 일단 uncertain(시간소진)으로 두기</span><span class="code-line"><span class="ln" aria-hidden="true">115</span>    solc = args.solc.expanduser().resolve()</span><span class="code-line"><span class="ln" aria-hidden="true">116</span>    if not solc.is_file() or not os.access(solc, os.X_OK):</span></code></pre>
+<p class="annotation">results는 결과들을 담는 목록입니다. uncertain(p, ...)는 파일 p에 대한 보류 결과 한 개를 만듭니다. 이 초기값은 “악성일 것 같다”는 추측이 아니라 미처리 파일을 위한 자리표입니다.</p>
+</details>
+</article>
+
+<article class="step"><h3>파일마다 별도 검사실을 엽니다</h3>
+<p><code>run_file()</code>은 별도 Python 프로세스로 <code>worker.py</code>를 실행합니다. 임시 폴더를 작업 공간으로 쓰고, 허용 시간을 넘으면 자식 프로세스 그룹까지 종료합니다. 한 파일의 실패를 나머지 파일과 분리합니다.</p>
+<p class="handoff">부모 CLI → 별도 worker 프로세스 + 임시 result.json 경로</p>
+<details class="code-detail"><summary>실제 코드 펼치기 · cli.py</summary>
+<div class="code-meta"><a href="../src/track1/cli.py">src/track1/cli.py</a> · 41–47행 · 현재 파일 발췌</div>
+<pre><code><span class="code-line"><span class="ln" aria-hidden="true">41</span>        process = subprocess.Popen(</span><span class="code-line"><span class="ln" aria-hidden="true">42</span>            [sys.executable, str(worker), str(source), str(solc), str(output)],</span><span class="code-line"><span class="ln" aria-hidden="true">43</span>            cwd=directory,</span><span class="code-line"><span class="ln" aria-hidden="true">44</span>            stdout=sys.stderr,</span><span class="code-line"><span class="ln" aria-hidden="true">45</span>            stderr=sys.stderr,</span><span class="code-line"><span class="ln" aria-hidden="true">46</span>            start_new_session=True,</span><span class="code-line"><span class="ln" aria-hidden="true">47</span>        )</span></code></pre>
+<p class="annotation">Popen은 별도 프로그램을 시작합니다. worker가 받는 것은 소스 경로·컴파일러 경로·결과를 쓸 경로입니다. start_new_session은 이 검사실의 프로세스들을 함께 관리하기 위한 설정입니다.</p>
+</details>
+</article>
+
+<article class="step"><h3>글자를 구조와 길 지도로 바꿉니다</h3>
+<p><code>worker.analyze_file()</code>에서 solc와 Slither를 사용합니다. 함수·변수 선언·갈림길·계산·호출을 구조로 읽어 <code>verdict.analyze()</code>에 넘깁니다.</p>
+<p class="handoff">.sol 텍스트 → Slither 분석 객체 → verdict.analyze()</p>
+<details class="code-detail"><summary>실제 코드 펼치기 · worker.py</summary>
+<div class="code-meta"><a href="../src/track1/worker.py">src/track1/worker.py</a> · 9–14행 · 현재 파일 발췌</div>
+<pre><code><span class="code-line"><span class="ln" aria-hidden="true">9</span>def analyze_file(source, solc):</span><span class="code-line"><span class="ln" aria-hidden="true">10</span>    from slither.slither import Slither</span><span class="code-line"><span class="ln" aria-hidden="true">11</span>    from track1.verdict import analyze</span><span class="code-line"><span class="ln" aria-hidden="true">12</span></span><span class="code-line"><span class="ln" aria-hidden="true">13</span>    analysis = Slither(str(source), solc=str(solc))</span><span class="code-line"><span class="ln" aria-hidden="true">14</span>    return {&quot;file&quot;: source.name, **analyze(analysis, source)}</span></code></pre>
+<p class="annotation">analysis는 최종 판정이 아니라 코드를 읽어 만든 구조입니다. **analyze(...)는 판정 함수가 돌려준 사전의 항목들을 새 사전에 펼칩니다. 여기에 원래 파일 이름을 붙입니다.</p>
+</details>
+</article>
+
+<article class="step"><h3>계약마다 일곱 검사를 시도합니다</h3>
+<p><code>verdict.py</code>는 파일 안의 각 계약에 규칙을 차례로 시도합니다. 각 규칙은 자신이 이해하는 계약 모양인지 확인하고 조건·잔액·호출을 검사합니다. 지원하지 못하면 <code>Unsupported</code>로 알립니다.</p>
+<p class="handoff">계약 구조 → 각 rule(contract) → 판정 또는 지원 한계</p>
+<details class="code-detail"><summary>실제 코드 펼치기 · verdict.py</summary>
+<div class="code-meta"><a href="../src/track1/verdict.py">src/track1/verdict.py</a> · 28–33행 · 현재 파일 발췌</div>
+<pre><code><span class="code-line"><span class="ln" aria-hidden="true">28</span>        for label, rule in RULES:</span><span class="code-line"><span class="ln" aria-hidden="true">29</span>            try:</span><span class="code-line"><span class="ln" aria-hidden="true">30</span>                matched.append(rule(contract))</span><span class="code-line"><span class="ln" aria-hidden="true">31</span>            except Unsupported as error:</span><span class="code-line"><span class="ln" aria-hidden="true">32</span>                missing.append((label, str(error), error.node))</span><span class="code-line"><span class="ln" aria-hidden="true">33</span>        if matched:</span></code></pre>
+<p class="annotation">rule은 지금 시도할 분석 함수입니다. matched에는 성공한 규칙의 결과가 모입니다. Unsupported를 받았다고 바로 파일 전체를 보류하지는 않습니다. 다른 규칙이 계약을 완전히 설명할 수 있는지도 봅니다.</p>
+</details>
+</article>
+
+<article class="step"><h3>위험 근거와 미해결 범위를 모읍니다</h3>
+<p>분석 범위 검사를 통과한 뒤, 위험 근거가 있으면 <strong>M</strong>, 위험 근거는 없지만 미해결 계약이 남으면 <strong>U</strong>, 필요한 계약을 지원 모델로 확인했으면 <strong>B</strong>가 됩니다. 규칙들의 다수결이 아닙니다.</p>
+<p class="handoff">계약별 결과와 한계 → 파일별 verdict</p>
+<details class="code-detail"><summary>실제 코드 펼치기 · verdict.py</summary>
+<div class="code-meta"><a href="../src/track1/verdict.py">src/track1/verdict.py</a> · 54–63행 · 현재 파일 발췌</div>
+<pre><code><span class="code-line"><span class="ln" aria-hidden="true">54</span>    malicious = [f for f in findings if f[&quot;verdict&quot;] == &quot;MALICIOUS&quot;]</span><span class="code-line"><span class="ln" aria-hidden="true">55</span>    if malicious:</span><span class="code-line"><span class="ln" aria-hidden="true">56</span>        limited = render(&quot;UNCERTAIN&quot;, limitations)</span><span class="code-line"><span class="ln" aria-hidden="true">57</span>        return {&quot;verdict&quot;: &quot;MALICIOUS&quot;, &quot;reasons&quot;: unique([r for f in malicious for r in f[&quot;reasons&quot;]] + limited[&quot;reasons&quot;]),</span><span class="code-line"><span class="ln" aria-hidden="true">58</span>                &quot;evidence&quot;: unique([e for f in malicious for e in f[&quot;evidence&quot;]] + limited[&quot;evidence&quot;])}</span><span class="code-line"><span class="ln" aria-hidden="true">59</span>    if limitations or not findings:</span><span class="code-line"><span class="ln" aria-hidden="true">60</span>        return render(&quot;UNCERTAIN&quot;, limitations or [claim(&quot;판정할 컨트랙트가 없습니다.&quot;)])</span><span class="code-line"><span class="ln" aria-hidden="true">61</span>    return {&quot;verdict&quot;: &quot;BENIGN&quot;, &quot;reasons&quot;: unique([r for f in findings for r in f[&quot;reasons&quot;]]),</span><span class="code-line"><span class="ln" aria-hidden="true">62</span>            &quot;evidence&quot;: unique([e for f in findings for e in f[&quot;evidence&quot;]])}</span><span class="code-line"><span class="ln" aria-hidden="true">63</span></span></code></pre>
+<p class="annotation">M 결과가 있으면 그 위험 설명을 우선 반환합니다. 그렇지 않을 때 limitations 또는 결과 없음이 U를 만듭니다. import 범위 등 더 앞선 검사에서 곧바로 U가 되는 경우도 있습니다.</p>
+</details>
+</article>
+
+<article class="step"><h3>근거를 읽을 수 있는 문장으로 만듭니다</h3>
+<p><code>reporting.py</code>는 규칙의 결론을 초기 설정, 권한, 성공 조건, 상태 변화·호출 순서와 연결합니다. 규칙 실행 중 설명 재료를 만들고, 집계할 때 중복을 정리합니다. 실제 구현에서는 5~6단계에서도 함께 사용됩니다.</p>
+<p class="handoff">결론 + 경로 기록 + 원본 노드 → reasons / evidence</p>
+<details class="code-detail"><summary>실제 코드 펼치기 · reporting.py</summary>
+<div class="code-meta"><a href="../src/track1/reporting.py">src/track1/reporting.py</a> · 33–35행 · 현재 파일 발췌</div>
+<pre><code><span class="code-line"><span class="ln" aria-hidden="true">33</span>def claim(text, nodes=(), scope=&quot;컨트랙트 전체 분석&quot;):</span><span class="code-line"><span class="ln" aria-hidden="true">34</span>    return Claim(text.strip(), unique([location(n) for n in nodes]), scope)</span><span class="code-line"><span class="ln" aria-hidden="true">35</span></span></code></pre>
+<p class="annotation">claim은 “설명 문장 + 원본 위치”를 한 묶음으로 만드는 도구입니다. 같은 위험을 여러 규칙이 설명하면 합칠 수 있지만, 서로 다른 위험이나 함수까지 개수 제한으로 지우지는 않습니다.</p>
+</details>
+</article>
+
+<article class="step"><h3>작은 결과를 모아 판정표 하나를 냅니다</h3>
+<p>worker가 임시 <code>result.json</code>에 한 파일 결과를 씁니다. 부모 CLI가 읽어서 목록에 넣고, 모든 처리가 끝나면 <strong>stdout에 JSON 배열 하나</strong>를 출력합니다. 진행 상황과 진단은 별도 통로인 stderr로 갑니다.</p>
+<p class="handoff">worker → 임시 파일 → CLI results → stdout JSON 배열</p>
+<details class="code-detail"><summary>실제 코드 펼치기 · worker.py</summary>
+<div class="code-meta"><a href="../src/track1/worker.py">src/track1/worker.py</a> · 32–32행 · 현재 파일 발췌</div>
+<pre><code><span class="code-line"><span class="ln" aria-hidden="true">32</span>    output.write_text(json.dumps(result, ensure_ascii=False), encoding=&quot;utf-8&quot;)</span></code></pre>
+<p class="annotation">worker는 최종 JSON 배열을 직접 출력하지 않습니다. 임시 결과 파일로 부모에게 전달하므로 컴파일러 로그와 최종 JSON이 섞이는 일을 막을 수 있습니다.</p>
+</details>
+<details class="code-detail"><summary>실제 코드 펼치기 · cli.py</summary>
+<div class="code-meta"><a href="../src/track1/cli.py">src/track1/cli.py</a> · 139–140행 · 현재 파일 발췌</div>
+<pre><code><span class="code-line"><span class="ln" aria-hidden="true">139</span>    print(json.dumps(results, ensure_ascii=False, indent=2))</span><span class="code-line"><span class="ln" aria-hidden="true">140</span>    return 0</span></code></pre>
+<p class="annotation">json.dumps는 Python의 목록과 사전을 JSON 글자로 바꿉니다. ensure_ascii=False는 한글을 그대로 읽을 수 있게 합니다. return 0은 정상적인 일괄 실행 종료를 뜻하며 모든 파일이 BENIGN이라는 뜻은 아닙니다.</p>
+</details>
+</article>
+
+</div>
+</section>
+<section id="records" class="chapter"><div class="chapter-heading"><span class="chapter-no">03</span><div><h2>복잡한 코드를 어떻게 기억할까?</h2>
+<p class="muted">검사기는 코드를 읽으며 “조건 / 바뀐 것 / 외부 호출”을 메모합니다.</p>
+</div>
+</div>
+
+<div class="grid2"><article class="card"><p class="mini-label">학습용 축약 예시 · 실제 분석 출력 아님</p>
+<h3>친구에게 쿠폰 3장 보내기</h3>
+<pre><code>require(balance[msg.sender] &gt;= 3);
+balance[msg.sender] -= 3;
+balance[friend] += 3;</code></pre>
+<p>내가 10장을 갖고 있었다면 7장이 됩니다. 친구가 2장을 갖고 있었다면 5장이 됩니다. 두 사람의 합계 12장은 그대로입니다.</p>
+</article>
+<article class="card"><h3>분석기가 남기는 메모</h3>
+<table><thead><tr><th>기록</th><th>이 예시에서의 뜻</th></tr>
+</thead>
+<tbody><tr><td><code>guards</code></td><td>성공하려면 내 잔액이 3 이상</td></tr>
+<tr><td><code>writes</code></td><td>내 잔액 −3, 친구 잔액 +3</td></tr>
+<tr><td><code>calls</code></td><td>이 예시에는 외부 호출 없음</td></tr>
+</tbody>
+</table>
+<p>실제 숫자를 모르면 “이전 잔액 − amount”처럼 <strong>관계</strong>를 저장합니다. 이를 기호 표현이라고 부릅니다.</p>
+</article>
+</div>
+
+<div class="grid2"><article class="card"><h3>linear.py: 한 줄로 이어진 길</h3>
+<p>지원하는 단순 함수의 실행 노드를 순서대로 읽습니다. 읽을 수 없는 갈림길이나 반복이 나오면 범위를 벗어났다고 알립니다.</p>
+<p class="caption">첫 네 규칙이 사용하는 기본 해석 도구</p>
+</article>
+<article class="card"><h3>paths.py: 갈림길이 있는 지도</h3>
+<p><code>if</code>의 참·거짓 길을 나눠 조건과 기록을 따로 보관합니다. 지원하는 내부 함수 호출은 인자를 연결해 따라갑니다. 실패로 취소되는 길은 성공 경로에서 제외합니다.</p>
+<p class="caption">확장 토큰·금고·장부 규칙의 경로 해석 도구</p>
+</article>
+</div>
+
+<details class="code-detail"><summary>실제 코드 펼치기 · linear.py</summary>
+<div class="code-meta"><a href="../src/track1/rules/linear.py">src/track1/rules/linear.py</a> · 34–36행 · 현재 파일 발췌</div>
+<pre><code><span class="code-line"><span class="ln" aria-hidden="true">34</span>def symbol(variable):</span><span class="code-line"><span class="ln" aria-hidden="true">35</span>    return (&quot;variable&quot;, variable)</span><span class="code-line"><span class="ln" aria-hidden="true">36</span></span></code></pre>
+<p class="annotation">같은 이름표를 붙인 다른 사물은 다른 사물입니다. 변수도 이름 문자열만 보지 않고 Slither의 선언 객체와 연결합니다. 이름을 balance에서 bananas로 바꿨다는 이유만으로 의미가 달라지지 않게 하기 위해서입니다.</p>
+</details>
+
+<details class="code-detail"><summary>실제 코드 펼치기 · paths.py</summary>
+<div class="code-meta"><a href="../src/track1/rules/paths.py">src/track1/rules/paths.py</a> · 64–74행 · 현재 파일 발췌</div>
+<pre><code><span class="code-line"><span class="ln" aria-hidden="true">64</span>class Path:</span><span class="code-line"><span class="ln" aria-hidden="true">65</span>    guards: list = field(default_factory=list)</span><span class="code-line"><span class="ln" aria-hidden="true">66</span>    writes: list = field(default_factory=list)</span><span class="code-line"><span class="ln" aria-hidden="true">67</span>    calls: list = field(default_factory=list)</span><span class="code-line"><span class="ln" aria-hidden="true">68</span>    steps: list = field(default_factory=list)</span><span class="code-line"><span class="ln" aria-hidden="true">69</span>    checked: list = field(default_factory=list)</span><span class="code-line"><span class="ln" aria-hidden="true">70</span>    values: dict = field(default_factory=dict)</span><span class="code-line"><span class="ln" aria-hidden="true">71</span>    refs: dict = field(default_factory=dict)</span><span class="code-line"><span class="ln" aria-hidden="true">72</span>    storage: dict = field(default_factory=dict)</span><span class="code-line"><span class="ln" aria-hidden="true">73</span>    result: tuple = ()</span><span class="code-line"><span class="ln" aria-hidden="true">74</span>    stopped: bool = False</span></code></pre>
+<p class="annotation">Path는 길 하나의 메모장입니다. guards는 성공 조건, writes는 저장소 변경, calls는 외부 호출, steps는 진행 순서입니다. values/refs/storage는 값과 참조를 추적하는 내부 기록입니다.</p>
+</details>
+
+<details><summary>왜 require가 뒤에 있어도 확인해야 하나요?</summary>
+<div class="detail-body"><p>Solidity에서 실행이 revert로 끝나면 그 실행의 상태 변경도 되돌아갑니다. 따라서 “총량을 더한 뒤 상한 검사”라는 순서만 보고 바로 상한 우회라고 할 수는 없습니다. <strong>성공한 실행이 결국 상한을 넘을 수 있는지</strong>를 봐야 합니다.</p>
+<p>외부 호출이 끼면 다른 코드가 중간에 다시 들어올 수 있어 금고 규칙의 추가 검토가 필요합니다. 보고서의 “성공 조건”은 항상 코드 맨 앞에서 검사됐다는 뜻이 아닙니다.</p>
+</div>
+</details>
+
+<div class="callout amber"><strong>지도에는 읽을 수 있는 크기가 있습니다.</strong><p>경로 예산 64, 호출 깊이 8, 노드 방문 예산 400 등의 제한이 있습니다. 루프·재귀·assembly·복잡한 외부 호출까지 일반적으로 풀어 주는 분석기는 아닙니다. 무시한 계산이 실행을 취소할 수 있는지도 <code>checked.py</code>에서 제한적으로 확인합니다.</p>
+</div>
+</section>
+<section id="examples" class="chapter"><div class="chapter-heading"><span class="chapter-no">04</span><div><h2>주인이 쿠폰을 만드는 두 계약</h2>
+<p class="muted">공개 표본 P2와 P4로 “관리자 권한”과 “위험한 권한”의 차이를 봅니다.</p>
+</div>
+</div>
+
+<div class="grid2"><article class="card"><span class="tag m">P2 · MALICIOUS</span><h3 style="margin-top:14px">개수를 막는 천장이 없다</h3>
+<p>관리자가 총량과 자기 잔액을 같은 양만큼 늘립니다. 그 잔액은 다른 사람에게 보낼 수 있습니다. 총공급량에 대한 정책상 상한이 없어 기존 보유자의 비중을 희석할 수 있습니다.</p>
+<details class="code-detail"><summary>실제 코드 펼치기 · P2_HiddenMint.sol</summary>
+<div class="code-meta"><a href="../reference/public/P2_HiddenMint.sol">reference/public/P2_HiddenMint.sol</a> · 30–34행 · 현재 파일 발췌</div>
+<pre><code><span class="code-line"><span class="ln" aria-hidden="true">30</span>    function distributeRewards(uint256 amount) external onlyOwner {</span><span class="code-line"><span class="ln" aria-hidden="true">31</span>        totalSupply += amount;</span><span class="code-line"><span class="ln" aria-hidden="true">32</span>        balanceOf[owner] += amount;</span><span class="code-line"><span class="ln" aria-hidden="true">33</span>        emit Transfer(address(0), owner, amount);</span><span class="code-line"><span class="ln" aria-hidden="true">34</span>    }</span></code></pre>
+<p class="annotation">+= amount는 이전 값에 amount를 더해 다시 저장한다는 뜻입니다. 이름이 distributeRewards여서 위험한 것이 아닙니다. onlyOwner의 실제 조건, 공급량·잔액 증가, 전송 기능을 함께 확인합니다.</p>
+</details>
+</article>
+<article class="card"><span class="tag b">P4 · BENIGN</span><h3 style="margin-top:14px">새 총량이 천장 아래여야 한다</h3>
+<p>관리자는 발행할 수 있지만 <code>총량 + 이번 양 ≤ MAX_SUPPLY</code>를 통과해야 합니다. 고정 상한과 초기 상태, 다른 상태 변경까지 지원 모델에 맞는지 확인합니다.</p>
+<details class="code-detail"><summary>실제 코드 펼치기 · P4_CappedMint.sol</summary>
+<div class="code-meta"><a href="../reference/public/P4_CappedMint.sol">reference/public/P4_CappedMint.sol</a> · 24–31행 · 현재 파일 발췌</div>
+<pre><code><span class="code-line"><span class="ln" aria-hidden="true">24</span>    function mint(address to, uint256 amount) external onlyOwner {</span><span class="code-line"><span class="ln" aria-hidden="true">25</span>        require(to != address(0), &quot;zero address&quot;);</span><span class="code-line"><span class="ln" aria-hidden="true">26</span>        require(totalSupply + amount &lt;= MAX_SUPPLY, &quot;cap exceeded&quot;); // 총공급량 상한을 강제합니다.</span><span class="code-line"><span class="ln" aria-hidden="true">27</span>        totalSupply += amount;</span><span class="code-line"><span class="ln" aria-hidden="true">28</span>        balanceOf[to] += amount;</span><span class="code-line"><span class="ln" aria-hidden="true">29</span>        emit Mint(to, amount);</span><span class="code-line"><span class="ln" aria-hidden="true">30</span>        emit Transfer(address(0), to, amount);</span><span class="code-line"><span class="ln" aria-hidden="true">31</span>    }</span></code></pre>
+<p class="annotation">require(조건)은 조건이 거짓이면 실행을 취소합니다. 현재 총량에 새 수량을 더한 값을 검사하므로 한 번의 발행량만 검사하는 것과 다릅니다. 상수 선언과 다른 함수도 실제 분석 대상입니다.</p>
+</details>
+</article>
+</div>
+
+<div class="callout"><strong>“이 함수에 검사 한 줄이 보인다”만으로 끝나지 않습니다.</strong><p>다른 발행 버튼이 상한을 피할 수 있는지, 상한 자체를 마음대로 바꿀 수 있는지, 초기 상태와 정수 계산이 맞는지까지 지원하는 범위에서 연결해야 합니다. <code>uint256</code>의 자료형 최대치는 이 대회에서 말하는 의미 있는 발행 상한과 다릅니다.</p>
+</div>
+
+<details><summary>토큰과 ETH 금고는 무엇이 다르죠?</summary>
+<div class="detail-body"><p><strong>토큰:</strong> 계약 안의 잔액 장부가 쿠폰 자체입니다. 전송은 보내는 장부를 줄이고 받는 장부를 늘립니다.</p>
+<p><strong>ETH 금고:</strong> 장부에는 “내가 찾아갈 권리”가 적혀 있고, ETH 송금은 별도로 일어납니다. 장부만 줄고 돈이 안 나가거나, 돈은 나갔는데 장부가 남아 있으면 두 기록이 어긋납니다. 그래서 외부 송금과 장부 변경 순서를 함께 읽습니다.</p>
+</div>
+</details>
+
+<h3 style="margin-top:24px">그럼 Python 규칙은 어디서 이것을 연결할까?</h3>
+<p><code>supply.analyze_contract()</code>는 먼저 전송 관계에서 잔액 장부를 식별하고, 나머지 함수가 그 장부와 연결된 발행인지 확인합니다. 이어 초기 설정과 상한을 검증합니다. 함수 이름이 아니라 <strong>같은 양이 어디서 줄고 어디서 늘어나는지</strong>가 출발점입니다.</p>
+
+<details class="code-detail"><summary>실제 코드 펼치기 · supply.py</summary>
+<div class="code-meta"><a href="../src/track1/rules/supply.py">src/track1/rules/supply.py</a> · 149–155행 · 현재 파일 발췌</div>
+<pre><code><span class="code-line"><span class="ln" aria-hidden="true">149</span>    transfers = {f: transfer_balance(f, t) for f, t in runtime}</span><span class="code-line"><span class="ln" aria-hidden="true">150</span>    balances = {balance for balance in transfers.values() if balance is not None}</span><span class="code-line"><span class="ln" aria-hidden="true">151</span>    if len(balances) != 1:</span><span class="code-line"><span class="ln" aria-hidden="true">152</span>        raise Unsupported(&quot;호출자 잔액 차감/수령자 동일량 증가로 잔액 저장소를 식별하지 못했습니다.&quot;)</span><span class="code-line"><span class="ln" aria-hidden="true">153</span>    balance = balances.pop()</span><span class="code-line"><span class="ln" aria-hidden="true">154</span>    mints = [mint_shape(f, t, balance) for f, t in runtime if transfers[f] is None]</span><span class="code-line"><span class="ln" aria-hidden="true">155</span>    if not mints:</span></code></pre>
+<p class="annotation">transfer_balance는 전송 모양에서 잔액 저장소를 찾습니다. None은 그 전송 형태로 식별하지 못했다는 뜻입니다. 정확히 한 잔액 장부를 찾지 못하면 Unsupported로 중단합니다. mint_shape는 나머지 함수의 발행 구조를 그 장부와 연결합니다.</p>
+</details>
+
+<details class="code-detail"><summary>실제 코드 펼치기 · supply.py</summary>
+<div class="code-meta"><a href="../src/track1/rules/supply.py">src/track1/rules/supply.py</a> · 167–176행 · 현재 파일 발췌</div>
+<pre><code><span class="code-line"><span class="ln" aria-hidden="true">167</span>    unbounded = [mint for mint in mints if not mint[&quot;caps&quot;]]</span><span class="code-line"><span class="ln" aria-hidden="true">168</span>    if unbounded:</span><span class="code-line"><span class="ln" aria-hidden="true">169</span>        return explain({</span><span class="code-line"><span class="ln" aria-hidden="true">170</span>            &quot;verdict&quot;: &quot;MALICIOUS&quot;,</span><span class="code-line"><span class="ln" aria-hidden="true">171</span>            &quot;reasons&quot;: [&quot;생성자에서 지정된 소유자가 외부 발행 함수를 반복 호출할 수 있습니다. &quot;</span><span class="code-line"><span class="ln" aria-hidden="true">172</span>                        &quot;입력 증가량이 공급량과 전송 가능한 주소별 잔액에 동일하게 더해지며, &quot;</span><span class="code-line"><span class="ln" aria-hidden="true">173</span>                        &quot;해당 직접 경로에 공급량 상한 검사가 없어 보유자 지분을 희석할 수 있습니다. &quot;</span><span class="code-line"><span class="ln" aria-hidden="true">174</span>                        &quot;정수 overflow 제한은 경제적 공급량 상한으로 취급하지 않았습니다.&quot;],</span><span class="code-line"><span class="ln" aria-hidden="true">175</span>            &quot;evidence&quot;: [evidence(m[&quot;function&quot;], m[&quot;node&quot;]) for m in unbounded],</span><span class="code-line"><span class="ln" aria-hidden="true">176</span>        }, list(traces.items()), kind=&quot;unbounded_mint&quot;)</span></code></pre>
+<p class="annotation">mints는 앞선 구조·초기 설정 검사를 통과한 발행들의 목록입니다. 그중 caps가 없는 발행이 있으면 위험 결과와 실제 쓰기 위치를 만듭니다. 이 블록만 떼어 “상한 글자가 없으면 무조건 악성”으로 사용하는 것이 아닙니다.</p>
+</details>
+</section>
+<section id="rules" class="chapter"><div class="chapter-heading"><span class="chapter-no">05</span><div><h2>일곱 규칙은 무엇을 검사할까?</h2>
+<p class="muted">각 규칙은 계약 전체가 자신의 지원 모델에 맞는지도 확인합니다.</p>
+</div>
+</div>
+
+<p>일곱 단계의 필터를 모두 통과해야 정상인 구조가 아닙니다. 여러 형태의 계약을 읽기 위한 <strong>일곱 분석 함수</strong>입니다. 한 규칙이 해당 계약을 충분히 설명한다면 다른 규칙의 형태 불일치가 자동으로 보류를 만들지는 않습니다.</p>
+
+<div class="rule-list"><details><summary><span class="rule-number">01</span>새 쿠폰을 누가, 얼마나 만들까?<small>supply.py</small></summary>
+<div class="detail-body"><p><strong>읽는 것:</strong> 관리자 발행 + 총량·잔액 증가 + 전송 가능한 자산을 연결합니다.</p>
+<p><strong>판단하는 것:</strong> 상한 없는 관리자 발행은 M. 실제로 강제되는 고정 상한은 지원 모델의 다른 조건까지 맞으면 B.</p>
+<p class="callout amber">owner가 있다는 사실만으로 M이 되지 않습니다.</p>
+<a class="read-link" href="../src/track1/rules/supply.py">실제 규칙 파일 열기 ↗</a></div>
+</details>
+<details><summary><span class="rule-number">02</span>쿠폰 총수는 그대로일까?<small>fixed_supply.py</small></summary>
+<div class="detail-body"><p><strong>읽는 것:</strong> 생성자가 만든 물량, 보내는 사람의 감소와 받는 사람의 증가, 승인 사용을 확인합니다.</p>
+<p><strong>판단하는 것:</strong> 고정 공급량과 허락에 맞는 이동을 설명할 수 있으면 B.</p>
+<p class="callout amber">모르는 상태 변경이 남았는데 단순 전송 하나만 보고 B를 내지 않습니다.</p>
+<a class="read-link" href="../src/track1/rules/fixed_supply.py">실제 규칙 파일 열기 ↗</a></div>
+</details>
+<details><summary><span class="rule-number">03</span>받은 쿠폰을 나도 보낼 수 있을까?<small>transfer_restrictions.py</small></summary>
+<div class="detail-body"><p><strong>읽는 것:</strong> 관리자는 명단에 있고, 관리자만 명단을 바꾸며, 보내는 사람은 명단을 통과해야 하는지 연결합니다.</p>
+<p><strong>판단하는 것:</strong> 관리자는 보내지만 일반 수령자는 갇히는 지원 형태는 M.</p>
+<p class="callout amber">명단 변수가 존재한다는 사실만으로 함정을 확정하지 않습니다.</p>
+<a class="read-link" href="../src/track1/rules/transfer_restrictions.py">실제 규칙 파일 열기 ↗</a></div>
+</details>
+<details><summary><span class="rule-number">04</span>누가 금고 안에서 새 명령을 실행할까?<small>delegatecall.py</small></summary>
+<div class="detail-body"><p><strong>읽는 것:</strong> 사용자 예치와 관리자의 호출 대상·데이터 제어를 함께 봅니다.</p>
+<p><strong>판단하는 것:</strong> 사용자 자산이 있는 저장소 문맥에서 관리자 임의 실행이 가능한 지원 형태는 M.</p>
+<p class="callout amber">delegatecall 한 단어만 찾는 검사가 아닙니다. 예치 경로 없는 경우는 대회 경계도 확인합니다.</p>
+<a class="read-link" href="../src/track1/rules/delegatecall.py">실제 규칙 파일 열기 ↗</a></div>
+</details>
+<details><summary><span class="rule-number">05</span>옆길로 상한·허락을 피할 수 있을까?<small>expanded_tokens.py</small></summary>
+<div class="detail-body"><p><strong>읽는 것:</strong> 지원하는 분기·내부 호출·상속을 따라 발행 상한, 승인 차감, 대칭·비대칭 전송 제한을 확인합니다.</p>
+<p><strong>판단하는 것:</strong> 우회 발행·승인 문제·관리자 예외 등 지원하는 위험은 M. 완전히 설명한 정상 모델은 B.</p>
+<p class="callout amber">한 번 발행할 양의 제한과 누적 총공급량 상한은 다릅니다. 모든 분기 형태를 지원하지 않습니다.</p>
+<a class="read-link" href="../src/track1/rules/expanded_tokens.py">실제 규칙 파일 열기 ↗</a></div>
+</details>
+<details><summary><span class="rule-number">06</span>장부와 실제 돈이 같이 줄어들까?<small>expanded_vaults.py</small></summary>
+<div class="detail-body"><p><strong>읽는 것:</strong> 한 ETH 장부의 예치·자기 출금·관리자 회수와 외부 호출 순서를 봅니다.</p>
+<p><strong>판단하는 것:</strong> 관리자의 예치금 회수, 지원하는 임의 실행, 지급 후 잔액 초기화 재진입 등은 M.</p>
+<p class="callout amber">송금이 먼저라는 이유만으로 모두 M은 아닙니다. 잠금·checked 차감·다른 출금 경로도 영향을 줍니다.</p>
+<a class="read-link" href="../src/track1/rules/expanded_vaults.py">실제 규칙 파일 열기 ↗</a></div>
+</details>
+<details><summary><span class="rule-number">07</span>남의 쿠폰을 허락 없이 가져갈까?<small>ledger_operations.py</small></summary>
+<div class="detail-body"><p><strong>읽는 것:</strong> 잔액 장부의 전송·승인·소각·총량 관계와 실제 자산을 움직일 수 있는지를 확인합니다.</p>
+<p><strong>판단하는 것:</strong> 동의 없는 타인 잔액 이동 등 지원 위험은 M. 지원하는 정상 전송·소각 모델은 B.</p>
+<p class="callout amber">잔액에 0을 대입하는 모든 형태를 회수 위험으로 인식하는 확장은 현재 포함하지 않습니다.</p>
+<a class="read-link" href="../src/track1/rules/ledger_operations.py">실제 규칙 파일 열기 ↗</a></div>
+</details>
+</div>
+
+<details class="code-detail"><summary>실제 코드 펼치기 · verdict.py</summary>
+<div class="code-meta"><a href="../src/track1/verdict.py">src/track1/verdict.py</a> · 9–15행 · 현재 파일 발췌</div>
+<pre><code><span class="code-line"><span class="ln" aria-hidden="true">9</span>RULES = ((&quot;공급량 상한&quot;, supply.analyze_contract),</span><span class="code-line"><span class="ln" aria-hidden="true">10</span>         (&quot;고정 공급량&quot;, fixed_supply.analyze_contract),</span><span class="code-line"><span class="ln" aria-hidden="true">11</span>         (&quot;비대칭 전송&quot;, transfer_restrictions.analyze_contract),</span><span class="code-line"><span class="ln" aria-hidden="true">12</span>         (&quot;임의 코드 실행&quot;, delegatecall.analyze_contract),</span><span class="code-line"><span class="ln" aria-hidden="true">13</span>         (&quot;확장 토큰 경로&quot;, expanded_tokens.analyze_contract),</span><span class="code-line"><span class="ln" aria-hidden="true">14</span>         (&quot;확장 금고 경로&quot;, expanded_vaults.analyze_contract),</span><span class="code-line"><span class="ln" aria-hidden="true">15</span>         (&quot;장부 전송과 소각&quot;, ledger_operations.analyze_contract))</span></code></pre>
+<p class="annotation">여기 있는 함수 일곱 개가 현재 등록된 규칙입니다. 새로운 탐지를 더하려면 문자열 경고를 합산하는 대신, 실제 상태와 경로를 검증하는 규칙 안에 근거가 들어가야 합니다.</p>
+</details>
+
+<details><summary>삭제한 1단계 기능과 지금 남아 있는 기능은?</summary>
+<div class="detail-body"><p>현재는 <strong>1단계 탐지 확대를 철회한 상태</strong>입니다. 공개 무상한 발행의 일반 지원, 관리자 직접 잔액 덮어쓰기·초기화 탐지 확대, 새 IF형 관리자 우회 경로, ETH 금고 정지 확대, 장부 미차감 별도 반복 출금·공개 임의 ETH 송금 확대를 현행 기능으로 설명하지 않습니다.</p>
+<p>기존 일곱 규칙, 함수별 흐름 설명과 중복 병합, 기본 파일 60초·전체 540초 설정은 남아 있습니다. <a href="STAGE1.md">STAGE1.md</a>는 철회 전 실험과 경계를 기록한 역사 문서입니다. 제한된 기존 사례가 지원된다는 사실과 새 일반 형태를 지원한다는 주장은 구분해야 합니다.</p>
+</div>
+</details>
+</section>
+<section id="verdict" class="chapter"><div class="chapter-heading"><span class="chapter-no">06</span><div><h2>언제 확정하고, 언제 보류할까?</h2>
+<p class="muted">UNCERTAIN은 원인을 나눠 읽어야 합니다.</p>
+</div>
+</div>
+
+<div class="table-scroll"><table><thead><tr><th>상황</th><th>파일 결론</th><th>왜?</th></tr>
+</thead>
+<tbody><tr><td>분석 중 충분한 위험 근거 발견</td><td class="m"><strong>MALICIOUS</strong></td><td>다른 계약의 한계가 남아도 이미 발견한 위험 근거를 보존</td></tr>
+<tr><td>위험 근거 없음 + 미해결 계약 있음</td><td class="u"><strong>UNCERTAIN</strong></td><td>일부 정상 결과만으로 파일 전체를 설명할 수 없음</td></tr>
+<tr><td>필요한 계약을 지원 모델로 안전 확인</td><td class="b"><strong>BENIGN</strong></td><td>미해결 범위 없이 해당 모델의 안전 조건 확인</td></tr>
+</tbody>
+</table>
+</div>
+
+<p class="caption">위 표는 계약 분석·집계 단계의 흐름입니다. import 계약의 원본 범위를 지원하지 않는 경우는 집계 전에 U로 반환합니다. 구체 계약에서 해석되는 추상 기반 계약은 별도 미해결 계약으로 중복 취급하지 않습니다. 판정할 계약이 없으면 U입니다.</p>
+
+<article class="card js-only"><p class="mini-label">학습용 판정 실습 · Solidity 실행 아님</p>
+<h3>한 파일에 계약이 두 개라면?</h3>
+<div class="controls"><label>계약 A<select id="contract-a"><option value="B">지원 모델로 정상 확인</option><option value="M">위험 근거 발견</option><option value="U">지원 모델로 설명 못함</option></select></label><label>계약 B<select id="contract-b"><option value="U">지원 모델로 설명 못함</option><option value="B">지원 모델로 정상 확인</option><option value="M">위험 근거 발견</option></select></label></div>
+<div class="result" aria-live="polite" id="verdict-result"></div>
+</article>
+
+<div class="grid2"><article class="card"><h3>내용을 읽지 못한 보류</h3>
+<p>계약이 지원 모델에 맞지 않거나 반복문·복잡한 자산 관계·미지원 연산이 등장한 경우입니다. 이때 시간을 늘려도 읽는 능력 자체가 생기지는 않습니다.</p>
+<p><strong>확인할 곳:</strong> <code>verdict.py</code>의 한계 설명 → 해당 규칙 → <code>paths.py</code> 또는 <code>linear.py</code></p>
+</article>
+<article class="card"><h3>실행을 끝내지 못한 보류</h3>
+<p>컴파일 실패, solc 실행 불가, 파일 시간 초과, 전체 예산 소진 등입니다. 환경과 실행 진단부터 확인해야 합니다.</p>
+<p><strong>확인할 곳:</strong> reasons의 실행 사유 → stderr → <code>worker.py</code>와 <code>cli.py</code></p>
+</article>
+</div>
+
+<div class="callout amber"><strong>보류를 줄이려면 무엇이 달라져야 할까요?</strong><p>미지원 구조라면 경로 해석과 규칙의 지원 모델을 실제로 넓히고 정상·악성 경계를 함께 검증해야 합니다. 보류 문구를 정상으로 바꾸거나 협업자 판정을 합산하는 것만으로 근거가 생기지는 않습니다. 이 안내서는 현재 분석 로직을 변경하지 않습니다.</p>
+</div>
+
+<details><summary>규칙 하나가 Unsupported면 전체 UNCERTAIN 아닌가요?</summary>
+<div class="detail-body"><p>예를 들어 고정 공급 토큰이 “발행 규칙”의 모양에 안 맞는 것은 자연스럽습니다. 다른 규칙이 그 계약의 전체 지원 모델을 확인했다면 그 결과를 쓸 수 있습니다.</p>
+<p>하지만 계약 A는 정상으로 설명하고 계약 B는 어느 규칙도 설명하지 못했다면, 위험 근거가 없는 한 파일 전체는 U입니다. <strong>규칙의 형태 불일치</strong>와 <strong>계약의 미해결 범위</strong>는 다릅니다.</p>
+</div>
+</details>
+</section>
+<section id="files" class="chapter"><div class="chapter-heading"><span class="chapter-no">07</span><div><h2>파일별 역할 지도</h2>
+<p class="muted">파일 이름을 외우기보다, 궁금한 질문에서 출발하세요.</p>
+</div>
+</div>
+
+<pre class="folder-map">trust1/
+├─ scripts/       실행 입구·개발 보조 도구
+├─ src/track1/    실제 분석 프로그램
+│  └─ rules/     일곱 규칙 + 공통 경로 해석 도구
+├─ tests/        정상·위험·미지원 경계의 회귀 검사
+├─ reference/    대회 원문·출력 규격·공개 표본
+├─ docs/         안내서·분석 범위·작업 및 실험 기록
+├─ docker/       실행 의존성의 고정 버전 목록
+├─ third_party/  기반 도구 라이선스 고지
+├─ artifacts/    컴파일러·로컬 작업 산출물
+└─ results/      로컬 분석 결과·로그</pre>
+
+<p>실제 판정은 <code>src/track1</code>이 담당합니다. 테스트의 기대 정답, 과거 결과, 이 안내서는 판정 근거로 읽지 않습니다. 배포 이미지에는 코드와 실행 도구를 담고, 테스트 정답을 넣어 답을 찾는 방식으로 실행하지 않습니다.</p>
+
+<div class="js-only"><label for="file-search">궁금한 파일·역할 찾기</label><input class="search" type="search" id="file-search" placeholder="예: 시간, 상한, paths, 보고서" aria-describedby="file-count"><p class="caption" id="file-count" aria-live="polite"></p>
+</div>
+
+<div class="file-grid"><details class="file-card"><summary><small>입구 · 분석기를 켜는 문</small><code>scripts/analyze.py</code></summary>
+<div class="detail-body"><p><strong>핵심:</strong> <code>main()</code></p>
+<p>Python이 src를 찾게 한 뒤 cli.main()을 부릅니다. 탐지 규칙은 여기 없습니다.</p>
+<p><strong>열어 볼 때:</strong> 실행 명령이 어디서 시작하는지 궁금할 때</p>
+<a href="../scripts/analyze.py">원본 파일 열기 ↗</a></div>
+</details>
+<details class="file-card"><summary><small>실행 · 접수·시간 관리</small><code>src/track1/cli.py</code></summary>
+<div class="detail-body"><p><strong>핵심:</strong> <code>main · run_file · stop_group</code></p>
+<p>폴더의 .sol 목록을 만들고, 파일마다 별도 worker를 실행하고, 마지막에 JSON 배열 하나를 출력합니다.</p>
+<p><strong>열어 볼 때:</strong> 파일 누락, 시간 초과, 실행 오류를 볼 때</p>
+<a href="../src/track1/cli.py">원본 파일 열기 ↗</a></div>
+</details>
+<details class="file-card"><summary><small>실행 · 파일 하나 전담 검사실</small><code>src/track1/worker.py</code></summary>
+<div class="detail-body"><p><strong>핵심:</strong> <code>analyze_file · main</code></p>
+<p>solc/Slither로 구조를 얻어 verdict.analyze에 넘깁니다. 결과는 임시 파일에 씁니다.</p>
+<p><strong>열어 볼 때:</strong> 컴파일·구조 분석 실패를 볼 때</p>
+<a href="../src/track1/worker.py">원본 파일 열기 ↗</a></div>
+</details>
+<details class="file-card"><summary><small>판정 · 규칙 호출·결론 집계</small><code>src/track1/verdict.py</code></summary>
+<div class="detail-body"><p><strong>핵심:</strong> <code>RULES · analyze</code></p>
+<p>각 계약에 일곱 규칙을 시도하고 위험 근거와 미지원 범위를 모아 파일 판정을 정합니다.</p>
+<p><strong>열어 볼 때:</strong> 왜 최종 M/B/U가 나왔는지 볼 때</p>
+<a href="../src/track1/verdict.py">원본 파일 열기 ↗</a></div>
+</details>
+<details class="file-card"><summary><small>판정 · 판정 근거를 읽는 문장으로</small><code>src/track1/reporting.py</code></summary>
+<div class="detail-body"><p><strong>핵심:</strong> <code>claim · path_claims · explain · merge_reports</code></p>
+<p>권한·성공 조건·상태 변경·호출을 원본 위치와 연결하고 중복 설명을 정리합니다.</p>
+<p><strong>열어 볼 때:</strong> 이유가 중복되거나 근거 줄이 이상할 때</p>
+<a href="../src/track1/reporting.py">원본 파일 열기 ↗</a></div>
+</details>
+<details class="file-card"><summary><small>공통 도구 · 갈림길 없는 짧은 길 읽기</small><code>src/track1/rules/linear.py</code></summary>
+<div class="detail-body"><p><strong>핵심:</strong> <code>Unsupported · Trace · trace_function</code></p>
+<p>단순한 경로를 조건·쓰기·호출로 기록합니다. 지원하지 못하는 구조는 Unsupported로 알립니다.</p>
+<p><strong>열어 볼 때:</strong> 기본 규칙이 읽는 기호와 경로를 볼 때</p>
+<a href="../src/track1/rules/linear.py">원본 파일 열기 ↗</a></div>
+</details>
+<details class="file-card"><summary><small>공통 도구 · 기본 규칙의 공통 준비</small><code>src/track1/rules/common.py</code></summary>
+<div class="detail-body"><p><strong>핵심:</strong> <code>read_contract · runtime · constructor_trace</code></p>
+<p>계약 형태, 생성자, 실행 함수, 선언의 역할을 확인하는 공통 도구입니다.</p>
+<p><strong>열어 볼 때:</strong> 기본 규칙들이 공유하는 제한을 볼 때</p>
+<a href="../src/track1/rules/common.py">원본 파일 열기 ↗</a></div>
+</details>
+<details class="file-card"><summary><small>공통 도구 · 갈림길·도우미 함수 따라가기</small><code>src/track1/rules/paths.py</code></summary>
+<div class="detail-body"><p><strong>핵심:</strong> <code>Path · trace_paths · contract_paths</code></p>
+<p>지원하는 if·내부 호출·modifier를 따라 성공할 수 있는 경로의 조건과 변경 순서를 기록합니다.</p>
+<p><strong>열어 볼 때:</strong> 확장 규칙이 어떤 경로를 이해하는지 볼 때</p>
+<a href="../src/track1/rules/paths.py">원본 파일 열기 ↗</a></div>
+</details>
+<details class="file-card"><summary><small>공통 도구 · 계산 때문에 취소되는지 확인</small><code>src/track1/rules/checked.py</code></summary>
+<div class="detail-body"><p><strong>핵심:</strong> <code>validate_checked</code></p>
+<p>지원하는 정수 계산에서 명백한 실패나 무시할 수 없는 계산을 확인합니다. 일반 수학 증명기는 아닙니다.</p>
+<p><strong>열어 볼 때:</strong> 계산 오류로 실행 가능성을 확정하지 못할 때</p>
+<a href="../src/track1/rules/checked.py">원본 파일 열기 ↗</a></div>
+</details>
+<details class="file-card"><summary><small>규칙 · 관리자 발행과 상한</small><code>src/track1/rules/supply.py</code></summary>
+<div class="detail-body"><p><strong>핵심:</strong> <code>analyze_contract</code></p>
+<p>전송 가능한 잔액·총공급량·발행 권한·실제 상한을 연결합니다.</p>
+<p><strong>열어 볼 때:</strong> 기본 발행 사례를 읽을 때</p>
+<a href="../src/track1/rules/supply.py">원본 파일 열기 ↗</a></div>
+</details>
+<details class="file-card"><summary><small>규칙 · 고정 공급량 장부</small><code>src/track1/rules/fixed_supply.py</code></summary>
+<div class="detail-body"><p><strong>핵심:</strong> <code>analyze_contract</code></p>
+<p>초기 물량, 전송, 자기 승인, 허락을 소비하는 대리 전송의 관계를 검증합니다.</p>
+<p><strong>열어 볼 때:</strong> 단순 고정 공급 토큰을 읽을 때</p>
+<a href="../src/track1/rules/fixed_supply.py">원본 파일 열기 ↗</a></div>
+</details>
+<details class="file-card"><summary><small>규칙 · 관리자만 빠져나가는 제한</small><code>src/track1/rules/transfer_restrictions.py</code></summary>
+<div class="detail-body"><p><strong>핵심:</strong> <code>analyze_contract</code></p>
+<p>관리자의 초기 허용, 명단 변경 권한, 일반 사용자의 전송 제한을 연결합니다.</p>
+<p><strong>열어 볼 때:</strong> 받을 수 있지만 다시 보내지 못하는 사례를 볼 때</p>
+<a href="../src/track1/rules/transfer_restrictions.py">원본 파일 열기 ↗</a></div>
+</details>
+<details class="file-card"><summary><small>규칙 · 사용자 자산과 임의 코드 실행</small><code>src/track1/rules/delegatecall.py</code></summary>
+<div class="detail-body"><p><strong>핵심:</strong> <code>analyze_contract</code></p>
+<p>예치 자산과 관리자가 정하는 delegatecall 대상·데이터를 연결합니다.</p>
+<p><strong>열어 볼 때:</strong> 금고의 저장소를 외부 코드가 바꿀 수 있는지 볼 때</p>
+<a href="../src/track1/rules/delegatecall.py">원본 파일 열기 ↗</a></div>
+</details>
+<details class="file-card"><summary><small>규칙 · 갈림길이 있는 토큰</small><code>src/track1/rules/expanded_tokens.py</code></summary>
+<div class="detail-body"><p><strong>핵심:</strong> <code>analyze_contract</code></p>
+<p>지원하는 분기·내부 함수에서 상한 우회, 승인 사용, 전송 제한, 관리자 쓰기를 검토합니다.</p>
+<p><strong>열어 볼 때:</strong> 직선 규칙만으로 읽기 어려운 토큰을 볼 때</p>
+<a href="../src/track1/rules/expanded_tokens.py">원본 파일 열기 ↗</a></div>
+</details>
+<details class="file-card"><summary><small>규칙 · ETH 금고의 장부와 송금</small><code>src/track1/rules/expanded_vaults.py</code></summary>
+<div class="detail-body"><p><strong>핵심:</strong> <code>analyze_contract</code></p>
+<p>예치·출금·관리자 회수·임의 실행과 제한된 재진입 형태를 연결합니다.</p>
+<p><strong>열어 볼 때:</strong> 장부 변경과 ETH 지급의 순서를 볼 때</p>
+<a href="../src/track1/rules/expanded_vaults.py">원본 파일 열기 ↗</a></div>
+</details>
+<details class="file-card"><summary><small>규칙 · 장부 전송·소각</small><code>src/track1/rules/ledger_operations.py</code></summary>
+<div class="detail-body"><p><strong>핵심:</strong> <code>analyze_contract</code></p>
+<p>한 잔액 장부에서 승인, 전송, 소각과 총량 변화, 제한된 관리자 발행·전송 제한을 검토합니다.</p>
+<p><strong>열어 볼 때:</strong> 타인 잔액을 움직이는 권한을 볼 때</p>
+<a href="../src/track1/rules/ledger_operations.py">원본 파일 열기 ↗</a></div>
+</details>
+<details class="file-card"><summary><small>검증·배포 · 실행 약속 확인</small><code>tests/test_cli.py</code></summary>
+<div class="detail-body"><p><strong>핵심:</strong> <code>CLI 회귀 테스트</code></p>
+<p>공개 입력, 출력, 오류 격리, 시간 예산 등 실행 계약을 검증합니다.</p>
+<p><strong>열어 볼 때:</strong> 실행 관리 코드를 바꾸기 전후</p>
+<a href="../tests/test_cli.py">원본 파일 열기 ↗</a></div>
+</details>
+<details class="file-card"><summary><small>검증·배포 · 설명과 근거 확인</small><code>tests/test_reporting.py</code></summary>
+<div class="detail-body"><p><strong>핵심:</strong> <code>보고서 회귀 테스트</code></p>
+<p>판정 설명, 원본 위치, 중복 병합과 독립 위험 보존을 확인합니다.</p>
+<p><strong>열어 볼 때:</strong> 보고서 문장 구조를 바꾸기 전후</p>
+<a href="../tests/test_reporting.py">원본 파일 열기 ↗</a></div>
+</details>
+<details class="file-card"><summary><small>검증·배포 · 실행 도구를 넣은 상자</small><code>Dockerfile</code></summary>
+<div class="detail-body"><p><strong>핵심:</strong> <code>ENTRYPOINT · CMD</code></p>
+<p>Python·Slither 의존성·solc·분석기·라이선스 고지를 담습니다. 완성 이미지 실행 중 다운로드하지 않습니다.</p>
+<p><strong>열어 볼 때:</strong> 실제 제출 실행본을 만들 때</p>
+<a href="../Dockerfile">원본 파일 열기 ↗</a></div>
+</details>
+<details class="file-card"><summary><small>검증·배포 · 대회 원문 기준</small><code>reference/TRACK1_README.md</code></summary>
+<div class="detail-body"><p><strong>핵심:</strong> <code>규정 참고</code></p>
+<p>판정 기준을 확인하는 자료입니다. public의 LABEL 주석은 평가 정답이며 분석기의 입력 특징이 아닙니다.</p>
+<p><strong>열어 볼 때:</strong> 대회 판정 의미를 확인할 때</p>
+<a href="../reference/TRACK1_README.md">원본 파일 열기 ↗</a></div>
+</details>
+</div>
+
+<details><summary>테스트 파일은 무엇을 보장하나요?</summary>
+<div class="detail-body"><p><a href="../tests/test_supply.py">test_supply.py</a>, <a href="../tests/test_expanded.py">test_expanded.py</a>, <a href="../tests/test_ledger_operations.py">test_ledger_operations.py</a>는 규칙의 정상·위험·미지원 사례를 검증합니다. CLI·보고서 테스트는 출력과 실행 약속도 확인합니다.</p>
+<p>회귀 테스트는 “알고 있는 사례를 고치다 다시 망가뜨리지 않았는가”를 확인하는 시험입니다. 개발 사례 통과가 비공개 모든 문제의 정답을 보장하지는 않습니다. 과거 전체 테스트 기록과 현재 변경 후의 부분 검증 기록은 <a href="PROGRESS.md">PROGRESS.md</a>에서 구분해 읽으세요.</p>
+</div>
+</details>
+</section>
+<section id="runtime" class="chapter"><div class="chapter-heading"><span class="chapter-no">08</span><div><h2>시간과 결과는 누가 지킬까?</h2>
+<p class="muted">분석 내용만큼, 끝까지 유효한 판정표를 내는 일도 중요합니다.</p>
+</div>
+</div>
+
+<div class="grid2"><article class="card"><p class="mini-label">기본 실행 예산</p>
+<h3>파일 최대 60초 / 전체 540초</h3>
+<p>파일 10개라면 평균 1분쯤이라는 감은 맞지만, <strong>10개 모두에게 60초를 보장하지는 않습니다.</strong> 다음 파일의 허용 시간은 <code>min(60, 전체 남은 시간)</code>입니다.</p>
+<p>540초는 전체 10분 한도 안에서 출력·정리 여유를 두기 위한 기본 예산입니다. 각 파일은 실제로 더 빨리 끝날 수 있고 전체 시간에는 준비·정리 비용도 들어갑니다.</p>
+</article>
+<article class="card js-only"><p class="mini-label">시간 배분 실습 · 실제 타이머 아님</p>
+<label for="remaining">전체 남은 시간: <output id="remaining-value">35</output>초</label><input id="remaining" type="range" min="0" max="120" value="35" step="1"><div class="meter" aria-hidden="true"><span id="time-meter"></span></div>
+<p id="budget-result" aria-live="polite"></p>
+<p class="caption">파일별 설정은 기본 60초로 고정한 학습 예시입니다.</p>
+</article>
+</div>
+
+<details class="code-detail"><summary>실제 코드 펼치기 · cli.py</summary>
+<div class="code-meta"><a href="../src/track1/cli.py">src/track1/cli.py</a> · 133–133행 · 현재 파일 발췌</div>
+<pre><code><span class="code-line"><span class="ln" aria-hidden="true">133</span>            results[index] = run_file(source, solc, min(args.file_timeout, remaining))</span></code></pre>
+<p class="annotation">min은 두 숫자 중 작은 것을 고릅니다. 전체가 12초 남았다면 다음 파일은 12초까지만 기다립니다. 남은 시간이 0 이하라면 worker를 새로 시작하지 않고 미처리 결과를 U로 남깁니다.</p>
+</details>
+
+<div class="grid2"><article class="card"><h3>stdout: 최종 답안 통로</h3>
+<p>JSON 배열 하나만 냅니다. 각 파일 결과에는 아래 네 필드가 있습니다.</p>
+<table><tbody><tr><th><code>file</code></th><td>원래 .sol 파일 이름</td></tr>
+<tr><th><code>verdict</code></th><td>MALICIOUS / BENIGN / UNCERTAIN</td></tr>
+<tr><th><code>reasons</code></th><td>판정 이유 문자열 목록</td></tr>
+<tr><th><code>evidence</code></th><td>원본 함수·줄 위치 근거</td></tr>
+</tbody>
+</table>
+</article>
+<article class="card"><h3>stderr: 검사실의 작업 메모</h3>
+<p>진행 상황, 컴파일 오류, 규칙의 지원 한계 같은 진단이 나옵니다. JSON과 통로를 분리해야 다른 프로그램이 답안을 읽을 수 있습니다.</p>
+<p>근거 줄은 원본의 <strong>1행부터</strong> 셉니다. MALICIOUS에는 실제 근거를 담고, 모르는 위치는 지어내지 않습니다. confidence나 내부 보고용 메타데이터를 공개 필드로 추가하지 않습니다.</p>
+</article>
+</div>
+
+<details><summary>문제가 생기면 어떻게 끝내나요?</summary>
+<div class="detail-body"><ul><li><strong>한 파일 컴파일 실패:</strong> worker가 해당 파일을 U로 기록합니다.</li>
+<li><strong>한 파일 시간 초과:</strong> CLI가 worker와 자식 프로세스 그룹을 종료하고 해당 파일을 U로 기록합니다.</li>
+<li><strong>전체 시간 소진:</strong> 아직 시작하지 못한 파일은 미리 준비한 U 결과로 남습니다.</li>
+<li><strong>입력 폴더가 없거나 .sol이 없음:</strong> 가짜 파일 결과를 만들지 않고 stderr와 비정상 종료로 입력 오류를 알립니다.</li>
+</ul>
+</div>
+</details>
+
+<details><summary>Docker는 이 흐름의 어디에 있나요?</summary>
+<div class="detail-body"><p>Docker는 위 분석기를 실행하는 데 필요한 도구를 담은 상자입니다. 이미지에는 Python, 고정 의존성, solc와 현재 소스가 들어갑니다. Linux 환경에서 일반 사용자 권한으로 실행하고, 기본 입력 경로는 <code>/input</code>입니다.</p>
+<p><strong>빌드</strong>는 상자를 만드는 일, <strong>실행</strong>은 그 상자로 검사하는 일입니다. 최초 의존성 설치에는 네트워크가 필요할 수 있지만 완성한 이미지의 분석 실행은 오프라인으로 동작합니다. 로컬 소스를 고쳐도 이미 만들어 둔 이미지 안의 코드는 자동으로 바뀌지 않습니다. 현재 코드를 반영하려면 재빌드해야 합니다.</p>
+<p>실제 실행·제출 명령은 <a href="../README.md">README</a>, <a href="DOCKER.md">DOCKER.md</a>, <a href="SUBMISSION.md">SUBMISSION.md</a>를 확인하세요. 철회 전 stage1/flow 실험 이미지는 현행 코드와 구분해야 합니다.</p>
+</div>
+</details>
+</section>
+<section id="reading" class="chapter"><div class="chapter-heading"><span class="chapter-no">09</span><div><h2>이 순서로 코드를 열어 보세요</h2>
+<p class="muted">처음부터 paths.py 전체를 외울 필요는 없습니다.</p>
+</div>
+</div>
+
+<div class="table-scroll"><table><thead><tr><th>순서</th><th>읽을 곳</th><th>스스로 답할 질문</th></tr>
+</thead>
+<tbody><tr><td>1</td><td>scripts/analyze.py → cli.main</td><td>입력 폴더는 어디로 전달되고, 파일 명단은 누가 만드는가?</td></tr>
+<tr><td>2</td><td>cli.run_file → worker.analyze_file</td><td>별도 프로그램은 왜 필요하고, 결과는 어떤 통로로 돌아오는가?</td></tr>
+<tr><td>3</td><td>P2 / P4 → supply.analyze_contract</td><td>발행되는 것이 실제 전송 가능한 잔액임을 어떻게 연결하는가?</td></tr>
+<tr><td>4</td><td>verdict.analyze → reporting</td><td>어떤 이유로 M/B/U가 되고, 그 설명의 줄 번호는 어디서 오는가?</td></tr>
+<tr><td>5</td><td>linear → paths → expanded 규칙</td><td>갈림길·내부 호출을 어떤 기록으로 바꾸고 무엇을 아직 못 읽는가?</td></tr>
+</tbody>
+</table>
+</div>
+
+<details><summary>Python이 처음이라면: 이 문법 여섯 개만 먼저</summary>
+<div class="detail-body"><table><thead><tr><th>문법</th><th>쉬운 뜻</th><th>이 저장소 예시</th></tr>
+</thead>
+<tbody><tr><td><code>def</code></td><td>이름 붙인 작업 만들기</td><td>def analyze_file(source, solc)</td></tr>
+<tr><td><code>return</code></td><td>작업 결과 돌려주기</td><td>return {"file": ...}</td></tr>
+<tr><td><code>import</code></td><td>다른 곳의 도구 가져오기</td><td>from track1.cli import main</td></tr>
+<tr><td><code>[] / {}</code></td><td>순서 있는 목록 / 이름표 달린 정보 묶음</td><td>results 목록 안에 파일별 결과 사전</td></tr>
+<tr><td><code>for</code></td><td>명단을 하나씩 살펴보기</td><td>각 파일, 각 계약, 각 규칙 반복</td></tr>
+<tr><td><code>try / except</code></td><td>작업을 시도하고 특정 실패를 처리하기</td><td>Unsupported면 해당 규칙의 한계 기록</td></tr>
+</tbody>
+</table>
+<p>Python의 들여쓰기는 “이 작업 안에 속한다”는 뜻입니다. <code>class</code>와 <code>@dataclass</code>는 여러 정보를 묶는 자료형을 만들 때 사용합니다. 여기서는 Path나 Claim 같은 메모장의 틀로 생각하면 됩니다.</p>
+</div>
+</details>
+
+<h3 style="margin-top:24px">읽은 흐름 확인하기</h3>
+
+<details><summary>① 일곱 규칙 중 여섯 규칙이 정상이라면 무조건 정상인가요?</summary>
+<div class="detail-body"><p>아닙니다. 현재는 일곱 규칙이 등록되어 있으며 다수결을 하지 않습니다. 위험 근거가 있으면 M이 우선이고, 미해결 계약이 남으면 B로 확정하지 않습니다.</p>
+</div>
+</details>
+
+<details><summary>② 변수 balance의 이름을 candy로 바꾸면 의미도 바뀌나요?</summary>
+<div class="detail-body"><p>이름만 바꾸고 관계가 같다면 의미는 같습니다. 분석기는 선언과 쓰기·계산·권한 관계를 읽습니다. 표시되는 변수 이름과 원본 줄 위치는 바뀔 수 있습니다.</p>
+</div>
+</details>
+
+<details><summary>③ 전체 시간이 8초 남았을 때 다음 파일에 60초를 주나요?</summary>
+<div class="detail-body"><p>8초까지만 기다립니다. 파일 제한과 남은 전체 시간 중 작은 값을 적용합니다. 아직 처리하지 못한 파일도 결과 목록에는 U로 남습니다.</p>
+</div>
+</details>
+
+<details><summary>④ 이유 문장을 예쁘게 정리하면 UNCERTAIN이 줄어드나요?</summary>
+<div class="detail-body"><p>설명 정리만으로는 지원 범위가 넓어지지 않습니다. reporting은 근거를 읽기 쉽게 만드는 역할입니다. 미지원 구조를 확정하려면 경로 해석과 판정 규칙에서 실제로 그 구조를 검증해야 합니다.</p>
+</div>
+</details>
+</section>
+<section id="terms" class="chapter"><div class="chapter-heading"><span class="chapter-no">10</span><div><h2>낯선 말은 여기서 찾아보세요</h2>
+<p class="muted">비유를 읽고, 옆의 실제 뜻을 연결하세요.</p>
+</div>
+</div>
+
+<dl class="glossary"><div><dt>스마트 계약 / Solidity</dt>
+<dd>돈이나 토큰을 다루는 규칙을 적은 프로그램 / 그 규칙을 쓰는 언어. .sol이 소스 파일입니다.</dd>
+</div>
+<div><dt>생성자 / constructor</dt>
+<dd>자판기를 처음 설치하는 작업. 관리자와 초기 잔액 등을 설정합니다. 반복 호출하는 버튼과 구분합니다.</dd>
+</div>
+<div><dt>함수 / function</dt>
+<dd>이름 붙은 작업 버튼. 전송·발행·출금 같은 동작의 입구입니다.</dd>
+</div>
+<div><dt>modifier</dt>
+<dd>버튼에 붙이는 공통 절차. onlyOwner라는 이름보다 실제 조건과 본문이 들어가는 _ 위치가 중요합니다.</dd>
+</div>
+<div><dt>msg.sender / msg.value</dt>
+<dd>이번 호출을 한 주소 / 이번 호출에 실려 온 ETH 수량입니다.</dd>
+</div>
+<div><dt>mapping / 저장소</dt>
+<dd>주소별 잔액 같은 이름표 달린 장부 / 호출이 끝나도 유지되는 계약의 상태입니다.</dd>
+</div>
+<div><dt>require / revert</dt>
+<dd>조건이 맞아야 계속 가기 / 실패로 실행을 취소하기. 실패하면 그 실행의 상태 변경도 되돌아갑니다.</dd>
+</div>
+<div><dt>AST / CFG / SlithIR</dt>
+<dd>문법 구조 나무 / 실행 길 지도 / 계산과 변경을 분석하기 쉬운 작은 명령으로 표현한 것. Slither가 제공하는 구조입니다.</dd>
+</div>
+<div><dt>기호 표현</dt>
+<dd>정확한 숫자를 몰라도 “이전 잔액 − 이번 수량”처럼 값의 관계를 저장하는 방식입니다.</dd>
+</div>
+<div><dt>guard / write / call</dt>
+<dd>성공 조건 / 저장소에 기록한 변경 / 다른 코드를 호출하는 동작입니다.</dd>
+</div>
+<div><dt>승인 / allowance</dt>
+<dd>다른 사람이 내 토큰을 얼마까지 옮겨도 되는지 적은 허락입니다. 사용량과 실제 이동을 연결해서 봅니다.</dd>
+</div>
+<div><dt>delegatecall</dt>
+<dd>다른 주소의 코드를 내 계약의 저장소 문맥에서 실행합니다. 어떤 코드를 누가 골라 실행하는지가 중요합니다.</dd>
+</div>
+<div><dt>재진입 / reentrancy</dt>
+<dd>돈을 받는 쪽의 코드가, 첫 작업이 끝나기 전에 다시 금고에 들어오는 상황입니다. 장부·잠금·지급 순서를 함께 봅니다.</dd>
+</div>
+<div><dt>checked 산술</dt>
+<dd>정수 범위를 넘는 계산 등이 실행을 취소할 수 있는 계산 방식입니다. 숫자 식을 무시하면 도달 가능성을 잘못 판단할 수 있습니다.</dd>
+</div>
+<div><dt>프로세스 / worker</dt>
+<dd>운영체제가 실행하는 프로그램 단위 / 여기서는 파일 하나를 맡는 별도 Python 프로세스입니다.</dd>
+</div>
+<div><dt>JSON / schema</dt>
+<dd>프로그램끼리 읽을 수 있는 정보 표기 / 그 정보에 어떤 항목과 형태가 필요한지 정한 규격입니다.</dd>
+</div>
+</dl>
+
+<div class="callout"><strong>한 문장으로 설명해 보세요.</strong><p>“CLI가 파일을 하나씩 worker에 맡기면, solc와 Slither가 구조를 만들고, 우리 규칙이 자산과 권한을 확인한 뒤, 판정과 원본 근거를 JSON으로 돌려준다.” 이 문장에서 모르는 부분만 위로 돌아가 읽으면 됩니다.</p>
+</div>
+</section>
+<footer class="page-footer"><p>현행 코드 안내 · 2026-09-19 · 1단계 탐지 확대 철회 후 상태<br>이 페이지의 숫자 실습은 설명용입니다. Solidity 분석·EVM 실행·성능 측정을 수행하지 않습니다.</p>
+<p><a href="../README.md">실행 안내</a> · <a href="REPORTING.md">보고서 구조</a> · <a href="EXPANDED_RULES.md">분석 범위</a> · <a href="PROGRESS.md">실제 변경·검증 기록</a></p>
+<details class="sources"><summary>실제 코드 발췌의 기준 확인</summary>
+<div class="detail-body"><p>코드 블록은 갱신 시점의 파일에서 직접 발췌했습니다. 이후 원본이 바뀌면 행 번호와 내용도 달라질 수 있습니다. 아래 SHA-256은 발췌 원본의 스냅샷 식별값입니다.</p>
+<p><a href="../scripts/analyze.py">scripts/analyze.py</a><br><code>f7ecac4141e0dc8b8cefd6e194957f2998f07a814a3fd2e08feda82b90a5daa0</code></p>
+<p><a href="../src/track1/cli.py">src/track1/cli.py</a><br><code>18d276f2dcaf6bc04d9febd57f73c761c91ece393224a1e87101a9b6033eb53c</code></p>
+<p><a href="../src/track1/worker.py">src/track1/worker.py</a><br><code>d5559a0e66451492832f2c2d616dedb3f6cb391ff2bb406fb4121a71954aa842</code></p>
+<p><a href="../src/track1/verdict.py">src/track1/verdict.py</a><br><code>8defcc15d0fdfd6832a5591a7a408f9e1af58ada92f2372960cbba014e50d030</code></p>
+<p><a href="../src/track1/reporting.py">src/track1/reporting.py</a><br><code>b32c4f0eb529f6ba9725abc8b1d2280cba99986236825e3532992720a1993bc1</code></p>
+<p><a href="../src/track1/rules/linear.py">src/track1/rules/linear.py</a><br><code>32737a1890e888c2a9b60561a104fc769c9c42442d0e0e617ecf4bf43eaf15be</code></p>
+<p><a href="../src/track1/rules/paths.py">src/track1/rules/paths.py</a><br><code>cc8a0131f614f1941a50e0cffd7a96ce962ed67b25197792b7047e26171d1b68</code></p>
+<p><a href="../reference/public/P2_HiddenMint.sol">reference/public/P2_HiddenMint.sol</a><br><code>115b62d80ad97a63338b196321ac7ad6021ee93a754c4f12c86b4ce5e59fce77</code></p>
+<p><a href="../reference/public/P4_CappedMint.sol">reference/public/P4_CappedMint.sol</a><br><code>01751a33fbcc8c832c4af3dd888ea802c262d62731aea468c526e4ff77f49cd6</code></p>
+<p><a href="../src/track1/rules/supply.py">src/track1/rules/supply.py</a><br><code>57bd2c8018388e74f5671a6a7612bfffad4feb254fec24fcf998441c558a9944</code></p>
+</div>
+</details>
+</footer>
+
+</main>
+</div>
+
+<script>
+'use strict';document.documentElement.classList.add('js');
+const steps=[...document.querySelectorAll('.step')];
+document.querySelectorAll('[data-step]').forEach(button=>button.addEventListener('click',()=>{const choice=button.dataset.step;document.querySelectorAll('[data-step]').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));steps.forEach((s,i)=>{s.hidden=choice!=='all'&&Number(choice)!==i;s.classList.toggle('current',choice!=='all'&&Number(choice)===i)});document.getElementById('step-status').textContent=choice==='all'?'8단계를 이어서 읽습니다. 위 버튼으로 한 단계에 집중할 수 있습니다.':(Number(choice)+1)+' / 8 단계 · 전체 흐름 버튼으로 다시 모두 볼 수 있습니다.'}));
+const names={M:'MALICIOUS',B:'BENIGN',U:'UNCERTAIN'};
+function verdictDemo(){const a=document.getElementById('contract-a').value,b=document.getElementById('contract-b').value;const result=[a,b].includes('M')?'M':[a,b].includes('U')?'U':'B';const reason={M:'이미 위험 근거가 있습니다. 다른 계약의 보류가 그 근거를 지우지 않습니다.',U:'위험 근거는 없지만 설명하지 못한 계약이 남아 있습니다.',B:'두 계약 모두 지원 모델로 확인했고 미해결 범위가 없습니다.'};const out=document.getElementById('verdict-result');out.replaceChildren();const strong=document.createElement('strong');strong.className=result.toLowerCase();strong.textContent=names[result];const p=document.createElement('p');p.textContent=reason[result];out.append(strong,p)}
+['contract-a','contract-b'].forEach(id=>document.getElementById(id).addEventListener('change',verdictDemo));verdictDemo();
+function budgetDemo(){const remaining=Number(document.getElementById('remaining').value),allowed=Math.min(60,remaining);document.getElementById('remaining-value').textContent=remaining;document.getElementById('time-meter').style.width=(allowed/60*100)+'%';document.getElementById('budget-result').textContent=remaining===0?'다음 worker를 시작하지 않습니다. 미처리 파일은 UNCERTAIN으로 남습니다.':'다음 파일에 허용할 대기 시간은 최대 '+allowed+'초입니다. '+(remaining<60?'전체 남은 시간이 우선합니다.':'파일별 60초 제한이 우선합니다.')}
+document.getElementById('remaining').addEventListener('input',budgetDemo);budgetDemo();
+const fileCards=[...document.querySelectorAll('.file-card')];function filterFiles(){const q=document.getElementById('file-search').value.trim().toLocaleLowerCase();let count=0;fileCards.forEach(card=>{const match=card.textContent.toLocaleLowerCase().includes(q);card.hidden=!match;if(match)count++});document.getElementById('file-count').textContent=count+' / '+fileCards.length+'개 파일'+(count?'':' · 다른 단어로 찾아보세요.')}
+document.getElementById('file-search').addEventListener('input',filterFiles);filterFiles();
+const navLinks=[...document.querySelectorAll('.sidebar nav a')];if('IntersectionObserver' in window){const observer=new IntersectionObserver(entries=>entries.forEach(entry=>{if(entry.isIntersecting)navLinks.forEach(a=>{const current=a.hash==='#'+entry.target.id;a.classList.toggle('active',current);if(current)a.setAttribute('aria-current','location');else a.removeAttribute('aria-current')})}),{rootMargin:'-8% 0px -65% 0px'});document.querySelectorAll('.chapter').forEach(s=>observer.observe(s))}
+let printState=null;window.addEventListener('beforeprint',()=>{printState={details:[...document.querySelectorAll('details')].map(d=>[d,d.open]),hidden:[...document.querySelectorAll('[hidden]')]};document.querySelectorAll('details').forEach(d=>d.open=true);printState.hidden.forEach(e=>e.hidden=false)});window.addEventListener('afterprint',()=>{if(!printState)return;printState.details.forEach(([d,open])=>d.open=open);printState.hidden.forEach(e=>e.hidden=true);printState=null});document.getElementById('print').addEventListener('click',()=>window.print());
+</script></body></html>

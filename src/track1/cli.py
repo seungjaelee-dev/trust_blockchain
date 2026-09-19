@@ -80,7 +80,8 @@ def main():
         help="미리 설치한 실제 solc 바이너리 경로",
     )  ##추가 solc 인자 2
     parser.add_argument(
-        "--file-timeout", type=positive_seconds, default=30
+        "--file-timeout", type=positive_seconds, default=60,
+        help="파일별 최대 분석 시간(기본 60초, 남은 전체 예산 우선)",
     )  ##파일 하나당 시간제한 3
     parser.add_argument(
         "--total-timeout", type=positive_seconds, default=540

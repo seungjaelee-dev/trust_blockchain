@@ -140,6 +140,7 @@ def analyze_contract(contract):
     allowances = {v for v in contract.state_variables if allowance_type(v)}
     bounds, setters = cap_bounds(runtime, values)
     risks, risk_nodes, safe_nodes, unexplained = [], [], [], []
+    risk_kinds = []  # Report identity only; never used to decide a verdict.
     supplies, minted, init_supply = set(), [], None
     capped_issues, zero_issues = 0, 0
     controlled_bool, lists, unlimited_caps = set(), set(), set()
@@ -204,6 +205,7 @@ def analyze_contract(contract):
                     restriction.append(g)
             if not own and not consumed:
                 if not restriction and not extras and is_parameter(origin, function, "address"):
+                    risk_kinds.append("unauthorized_transfer")
                     risks.append("외부 호출자가 타인 잔액을 차감해 같은 양을 다른 주소로 옮길 수 있습니다. "
                                  + ("승인 한도 검사는 있으나 사용분 차감이 없어 반복 사용으로 승인 총량을 넘길 수 있습니다."
                                     if permission is not None and ("LESS_EQUAL", amount, permission) in guards(path)
@@ -222,12 +224,14 @@ def analyze_contract(contract):
                 if g[0] == "OROR":
                     a, b = g[1:]
                     if any(equal(b, SENDER, symbol(o)) for o in owners) and (a in controlled_bool or (a[0] == "NOT" and a[1] in controlled_bool)):
+                        risk_kinds.append("asymmetric_pause")
                         risks.append("전송 제한 상태는 소유자가 변경하며, 소유자는 동일 제한을 우회해 전송할 수 있습니다. 일반 보유자만 차단되는 비대칭 제약입니다.")
                         risk_nodes.append(node)
                         continue
                 if g[0] == "index" and root(g) in lists and g[2] == SENDER:
                     enabled = any(loc == g and value == TRUE for _, init in initial for loc, value, _ in init.writes)
                     if enabled and owners:
+                        risk_kinds.append("sender_allowlist")
                         risks.append("소유자는 생성자에서 초기 허용되고 목록 변경을 통제합니다. 발신자 제한 때문에 일반 수령자는 허용 전까지 재전송할 수 없습니다.")
                         risk_nodes.append(node)
                         continue
@@ -290,6 +294,7 @@ def analyze_contract(contract):
                 if understood:
                     if any(is_parameter(g, function, "bool") or (g[0] == "NOT" and is_parameter(g[1], function, "bool")) for g in guards(path)):
                         issue += " 호출자가 선택하는 분기의 검사 우회 경로입니다."
+                    risk_kinds.append("unbounded_mint")
                     risks.append("소유자 발행 경로에서 실제 공급량 증가를 제한하는 고정 상한이 강제되지 않습니다. " + issue + " "
                                  "동일 증가량이 전송 가능한 잔액에도 반영되어 보유자 지분을 희석할 수 있습니다.")
                     risk_nodes.append(node)
@@ -325,6 +330,7 @@ def analyze_contract(contract):
         if not minted and values.get(supply) == ZERO:
             raise Unsupported("고정 공급량이 0이라 위험 경로에 영향을 받는 보유자 자산을 확인하지 못했습니다.")
         return explain({"verdict": "MALICIOUS", "reasons": risks,
+                "_reason_kinds": risk_kinds,
                 "_reason_evidence": [[location_evidence(n)] for n in risk_nodes],
                 "evidence": result("MALICIOUS", "", risk_nodes)["evidence"]}, initial + runtime)
     if unexplained:

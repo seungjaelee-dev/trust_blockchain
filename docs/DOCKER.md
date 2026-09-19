@@ -4,8 +4,8 @@
 
 2026-09-19 기준 Docker 빌드와 네트워크 차단·2CPU/4GB 공개 표본 실행을 확인했습니다.
 사용자도 별도 디렉터리에서 clone·build·run의 정상 동작을 보고했습니다.
-제출용 기본 실행은 [README](../README.md)를 따르세요. 9/19 규칙 보강 후 정상·위험·문법 오류 혼합60개를
-오프라인 2CPU/4GB에서 검증했습니다. 상세 결과는 [실험 기록](experiments/ledger-snapshot.json)에 있습니다.
+제출용 기본 실행은 [README](../README.md)를 따르세요. 문서·고지 정리 후 현재 코드의 정상·위험·문법 오류 혼합60개를
+오프라인 2CPU/4GB에서 검증했습니다. 상세 결과는 [제출 검증](experiments/submission-check.json)에 있습니다.
 
 기존 WSL에서 정상 동작한 Python 3.12.3, Slither 0.11.6, crytic-compile 0.4.2,
 solc 0.8.20과 설치 패키지 전체 버전을 고정합니다. Python 버전이 대회 필수 버전이라는
@@ -52,7 +52,7 @@ docker run --rm --network none --cpus 2 --memory 4g --memory-swap 4g \
 ```
 
 stdout은 JSON 배열만, stderr는 로그입니다. 입력은 읽기 전용입니다.
-기존 CLI의 파일별 30초/전체 540초 예산이 그대로 적용됩니다.
+CLI의 파일별 기본 60초/전체 540초 예산이 적용됩니다. 남은 전체 예산이 우선하므로 10개 입력에 각각 60초를 보장하지는 않습니다.
 `--memory-swap 4g`를 메모리와 같게 지정해 추가 swap을 허용하지 않습니다.
 WSL 호스트 메모리도 충분해야 하며 4GB는 예약량이 아닌 컨테이너 상한입니다.
 
@@ -93,7 +93,33 @@ docker run --rm --network none --cpus 2 --memory 4g --memory-swap 4g \
 ```
 
 Dockerfile만 전달하면 오프라인에서 최초 build가 되지 않습니다. 완성된 이미지 전달이 필요합니다.
-실제 제출 방식에 맞춘 라이선스 고지/소스 제공 정리와 최종 통합 검증은 아직 남아 있습니다.
+실제 설치 구성의 고지는 [THIRD_PARTY_NOTICES](../THIRD_PARTY_NOTICES.md)에 정리했습니다.
+고지 파일도 이미지에 포함됩니다. 최종 commit과 이미지/tar 해시를 연결하는 절차는 [SUBMISSION](SUBMISSION.md)을 따르세요.
+
+## 6. 개발용 전체 회귀 테스트
+
+일반 분석에는 위의 `docker run`만 필요합니다. 아래는 저장소의 테스트까지 실행하려는 개발자용 명령입니다. Linux/WSL의 저장소 루트에서 실행합니다.
+
+```bash
+docker run --rm -i --network none --cpus 2 --memory 4g --memory-swap 4g \
+  --mount "type=bind,source=$(pwd)/tests,target=/app/tests,readonly" \
+  --mount "type=bind,source=$(pwd)/reference,target=/app/reference,readonly" \
+  --env HOME=/tmp/trust1-test --entrypoint python \
+  trust404-track1:submission - <<'PY'
+from pathlib import Path
+import runpy
+import sys
+
+compiler = Path.home() / ".solc-select/artifacts/solc-0.8.20/solc-0.8.20"
+compiler.parent.mkdir(parents=True, exist_ok=True)
+compiler.symlink_to("/usr/local/bin/solc")
+sys.argv = ["unittest", "discover", "-s", "tests", "-v"]
+runpy.run_module("unittest", run_name="__main__")
+PY
+```
+
+테스트는 Python CLI를 직접 호출하므로 Docker 기본 진입점의 `--solc /usr/local/bin/solc`가 자동 전달되지 않습니다. 임시 HOME에 개발용 기본 경로를 만들고 포함된 바이너리로 연결합니다. 다운로드나 별도 컴파일러 설치는 없습니다. 컨테이너 종료 시 이 테스트용 경로도 사라집니다.
+위 혼합 검증은 완료했으며, 최종 전달본을 새로 만들거나 코드를 바꾸면 해당 고정본을 확인해야 합니다.
 
 공식 참고: [이미지 저장](https://docs.docker.com/reference/cli/docker/image/save/),
 [네트워크 차단](https://docs.docker.com/engine/network/drivers/none/),

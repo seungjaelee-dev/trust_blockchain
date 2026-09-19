@@ -19,6 +19,8 @@ RUN echo '0479d44fdf9c501c25337fdc540419f1593b884a87b47f023da4f1c700fda782  /usr
 
 COPY src/ /app/src/
 COPY scripts/analyze.py /app/scripts/analyze.py
+COPY THIRD_PARTY_NOTICES.md /opt/trust1/notices/THIRD_PARTY_NOTICES.md
+COPY third_party/ /opt/trust1/notices/third_party/
 RUN mkdir -p /home/trust1 \
     && chown 10001:10001 /home/trust1
 USER 10001:10001

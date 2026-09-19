@@ -1,2 +1,2 @@
-# JSON Schema 검증용. 채점 실행에는 필요하지 않다. 전체 offline lock은 후속 단계.
+# 개발 시 JSON Schema 검증용. Docker의 전체 설치 버전은 docker/requirements.lock 참조.
 jsonschema==4.26.0

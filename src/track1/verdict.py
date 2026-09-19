@@ -4,7 +4,7 @@ import sys
 
 from .rules import delegatecall, fixed_supply, supply, transfer_restrictions, expanded_tokens, expanded_vaults, ledger_operations
 from .rules.linear import Unsupported
-from .reporting import claim, render, unique
+from .reporting import claim, render, unique, merge_reports
 
 RULES = (("공급량 상한", supply.analyze_contract),
          ("고정 공급량", fixed_supply.analyze_contract),
@@ -31,7 +31,12 @@ def analyze(analysis, source):
             except Unsupported as error:
                 missing.append((label, str(error), error.node))
         if matched:
-            findings.extend(matched)
+            # Aggregate descriptions inside each contract; never collapse two
+            # contracts merely because their functions happen to share a name.
+            for verdict in ("MALICIOUS", "BENIGN"):
+                group = [item for item in matched if item['verdict'] == verdict]
+                if group:
+                    findings.append(merge_reports(group))
         else:
             for label, message, _ in missing:
                 print(f"[{contract.name} / {label}] {message}", file=sys.stderr)

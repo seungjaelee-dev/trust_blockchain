@@ -8,6 +8,10 @@ import sys
 import tempfile
 import time
 import unittest
+from contextlib import redirect_stdout
+import importlib.util
+import io
+from unittest.mock import patch
 
 from jsonschema import Draft202012Validator
 
@@ -17,6 +21,23 @@ SCHEMA = json.loads((ROOT / "reference/schema.json").read_text(encoding="utf-8")
 
 
 class CliTests(unittest.TestCase):
+    def test_default_file_budget_and_remaining_total(self):
+        spec = importlib.util.spec_from_file_location("budget_cli", ROOT / "src/track1/cli.py")
+        cli = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(cli)
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            for name in ["a.sol", "b.sol", "c.sol"]:
+                (directory / name).write_text("pragma solidity ^0.8.20;")
+            captured = io.StringIO()
+            with patch.object(sys, "argv", [str(CLI), str(directory), "--solc", sys.executable]), \
+                    patch.object(cli.time, "monotonic", side_effect=[1000, 1000, 1050, 1530]), \
+                    patch.object(cli, "run_file", side_effect=lambda source, solc, seconds: cli.uncertain(source, "budget test")) as run_file, \
+                    redirect_stdout(captured):
+                self.assertEqual(cli.main(), 0)
+            self.assertEqual([call.args[2] for call in run_file.call_args_list], [60, 60, 10])
+            self.assertEqual([x["file"] for x in json.loads(captured.getvalue())], ["a.sol", "b.sol", "c.sol"])
+
     def call_cli(self, directory, *options):
         return subprocess.run([sys.executable, str(CLI), str(directory), *map(str, options)],
                               capture_output=True, text=True, timeout=45, cwd=ROOT)

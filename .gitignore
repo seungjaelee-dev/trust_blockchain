@@ -8,7 +8,11 @@ artifacts/*
 !artifacts/docker/
 !artifacts/docker/solc-0.8.20
 results/
+*.log
+trust404-track1*.tar
 *.egg-info/
 dist/
 build/
 .env
+.env.*
+!.env.example

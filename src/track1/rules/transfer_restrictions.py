@@ -48,4 +48,4 @@ def analyze_contract(contract):
         "전송은 발신자의 주소별 허용 상태를 요구합니다. 생성자에서 소유자만 초기 허용되며, "
         "소유자는 수령자의 허용 여부와 무관하게 토큰을 보낼 수 있습니다. 목록 변경도 "
         "소유자만 수행하므로 일반 수령자는 허용되지 않으면 받은 토큰을 다시 전송할 수 없습니다."],
-        "evidence": [evidence(constructor, init_node), *setters, *transfers]}, list(traces.items()))
+        "evidence": [evidence(constructor, init_node), *setters, *transfers]}, list(traces.items()), kind="sender_allowlist")
